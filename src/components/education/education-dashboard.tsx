@@ -1501,11 +1501,12 @@ export function EducationDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>Select Class</Label>
-                  <Select value={attendanceClassId} onValueChange={setAttendanceClassId}>
+                  <Select value={attendanceClassId || "select-class"} onValueChange={(v) => setAttendanceClassId(v === "select-class" ? "" : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose a class" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="select-class">Choose a class...</SelectItem>
                       {classes.map(cls => (
                         <SelectItem key={cls.id} value={cls.id}>
                           {cls.name} {cls.grade ? `(${cls.grade})` : ''}
@@ -2243,11 +2244,12 @@ export function EducationDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
-                <Select value={studentForm.gender} onValueChange={(v) => setStudentForm({ ...studentForm, gender: v })}>
+                <Select value={studentForm.gender || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, gender: v === "none" ? "" : v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">Not specified</SelectItem>
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
@@ -2256,11 +2258,12 @@ export function EducationDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="classId">Class</Label>
-                <Select value={studentForm.classId} onValueChange={(v) => setStudentForm({ ...studentForm, classId: v })}>
+                <Select value={studentForm.classId || "no-class"} onValueChange={(v) => setStudentForm({ ...studentForm, classId: v === "no-class" ? "" : v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="no-class">No class assigned</SelectItem>
                     {classes.map(cls => (
                       <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
                     ))}
@@ -2309,11 +2312,12 @@ export function EducationDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="guardianRelation">Relationship</Label>
-                  <Select value={studentForm.guardianRelation} onValueChange={(v) => setStudentForm({ ...studentForm, guardianRelation: v })}>
+                  <Select value={studentForm.guardianRelation || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, guardianRelation: v === "none" ? "" : v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
                       <SelectItem value="Father">Father</SelectItem>
                       <SelectItem value="Mother">Mother</SelectItem>
                       <SelectItem value="Guardian">Guardian</SelectItem>
@@ -2364,11 +2368,12 @@ export function EducationDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="guardian2Relation">Relationship</Label>
-                  <Select value={studentForm.guardian2Relation} onValueChange={(v) => setStudentForm({ ...studentForm, guardian2Relation: v })}>
+                  <Select value={studentForm.guardian2Relation || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, guardian2Relation: v === "none" ? "" : v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
                       <SelectItem value="Father">Father</SelectItem>
                       <SelectItem value="Mother">Mother</SelectItem>
                       <SelectItem value="Guardian">Guardian</SelectItem>
@@ -2411,11 +2416,12 @@ export function EducationDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sessionId">Session</Label>
-                  <Select value={studentForm.sessionId} onValueChange={(v) => setStudentForm({ ...studentForm, sessionId: v })}>
+                  <Select value={studentForm.sessionId || "no-session"} onValueChange={(v) => setStudentForm({ ...studentForm, sessionId: v === "no-session" ? "" : v })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select session" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="no-session">Not assigned</SelectItem>
                       {sessions.map(sess => (
                         <SelectItem key={sess.id} value={sess.id}>{sess.name}</SelectItem>
                       ))}
@@ -2627,11 +2633,12 @@ export function EducationDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="classTeacher">Class Teacher</Label>
-                <Select value={classForm.teacherId} onValueChange={(v) => setClassForm({ ...classForm, teacherId: v })}>
+                <Select value={classForm.teacherId || "no-teacher"} onValueChange={(v) => setClassForm({ ...classForm, teacherId: v === "no-teacher" ? "" : v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select teacher" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="no-teacher">Not assigned</SelectItem>
                     {teachers.filter(t => t.status === "active").map(teacher => (
                       <SelectItem key={teacher.id} value={teacher.id}>
                         {teacher.firstName} {teacher.lastName}
@@ -2642,11 +2649,12 @@ export function EducationDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="classSession">Session</Label>
-                <Select value={classForm.sessionId} onValueChange={(v) => setClassForm({ ...classForm, sessionId: v })}>
+                <Select value={classForm.sessionId || "no-session"} onValueChange={(v) => setClassForm({ ...classForm, sessionId: v === "no-session" ? "" : v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select session" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="no-session">Not assigned</SelectItem>
                     {sessions.map(sess => (
                       <SelectItem key={sess.id} value={sess.id}>{sess.name}</SelectItem>
                     ))}
