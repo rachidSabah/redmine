@@ -1,0 +1,2230 @@
+// =====================================================
+// MULTI-TENANT SAAS PROJECT MANAGEMENT SYSTEM
+// Complete Database Schema for Jira + Redmine + Asana Alternative
+// =====================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  GUEST
+}
+
+enum ProjectVisibility {
+  PUBLIC
+  PRIVATE
+  INTERNAL
+}
+
+enum TicketStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  BLOCKED
+  DONE
+  CANCELLED
+  ARCHIVED
+}
+
+enum TicketPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  LOWEST
+}
+
+enum TicketType {
+  TASK
+  BUG
+  FEATURE
+  STORY
+  EPIC
+  SUBTASK
+  IMPROVEMENT
+  DOCUMENTATION
+}
+
+enum ActivityType {
+  CREATED
+  UPDATED
+  DELETED
+  ASSIGNED
+  UNASSIGNED
+  COMMENTED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  ATTACHMENT_ADDED
+  TIME_LOGGED
+  MENTIONED
+}
+
+enum NotificationType {
+  TICKET_ASSIGNED
+  TICKET_MENTIONED
+  TICKET_COMMENTED
+  TICKET_STATUS_CHANGED
+  PROJECT_INVITED
+  PROJECT_UPDATED
+  COMMENT_REPLY
+  TIME_LOG_APPROVED
+  TIME_LOG_REJECTED
+  SYSTEM_ANNOUNCEMENT
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  INCOMPLETE
+}
+
+// =====================================================
+// CORE MODELS
+// =====================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  image         String?
+  emailVerified DateTime?
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  
+  accounts      Account[]
+  sessions      Session[]
+  
+  memberships       OrganizationMember[]
+  ownedOrganizations Organization[] @relation("OwnedOrganizations")
+  
+  projects          ProjectMember[]
+  assignedTickets   Ticket[]          @relation("AssignedTickets")
+  reportedTickets   Ticket[]          @relation("ReportedTickets")
+  comments          Comment[]
+  timeLogs          TimeLog[]
+  activities        Activity[]
+  notifications     Notification[]
+  attachments       Attachment[]
+  chatMessages      ChatMessage[]
+  chatMemberships   ChatMember[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// =====================================================
+// MULTI-TENANT ORGANIZATION
+// =====================================================
+
+model Organization {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  logo        String?
+  website     String?
+  isActive    Boolean   @default(true)
+  
+  ownerId     String
+  owner       User      @relation("OwnedOrganizations", fields: [ownerId], references: [id])
+  
+  members     OrganizationMember[]
+  projects    Project[]
+  invitations OrganizationInvitation[]
+  
+  subscriptionPlan     SubscriptionPlan    @default(FREE)
+  subscriptionStatus   SubscriptionStatus  @default(ACTIVE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  subscriptionEndsAt   DateTime?
+  trialEndsAt          DateTime?
+  
+  maxMembers           Int     @default(5)
+  maxProjects          Int     @default(10)
+  maxStorageMB         Int     @default(500)
+  
+  settings            Json?
+  
+  customFields        CustomField[]
+  workflows           Workflow[]
+  chatChannels        ChatChannel[]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([slug])
+  @@index([ownerId])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String         @id @default(cuid())
+  organizationId String
+  userId         String
+  role           UserRole       @default(MEMBER)
+  isActive       Boolean        @default(true)
+  invitedBy      String?
+  joinedAt       DateTime       @default(now())
+  
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model OrganizationInvitation {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  role           UserRole @default(MEMBER)
+  token          String   @unique
+  invitedBy      String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@index([organizationId])
+  @@index([email])
+  @@map("organization_invitations")
+}
+
+// =====================================================
+// PROJECT MANAGEMENT
+// =====================================================
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+model Project {
+  id             String             @id @default(cuid())
+  organizationId String
+  name           String
+  key            String
+  description    String?
+  color          String?
+  icon           String?
+  visibility     ProjectVisibility  @default(PUBLIC)
+  status         ProjectStatus      @default(ACTIVE)
+  isActive       Boolean            @default(true)
+  
+  parentId       String?
+  parent         Project?           @relation("ProjectHierarchy", fields: [parentId], references: [id])
+  subprojects    Project[]          @relation("ProjectHierarchy")
+  
+  startDate      DateTime?
+  endDate        DateTime?
+  
+  progress       Int                @default(0)
+  isPublic       Boolean            @default(true)
+  
+  members        ProjectMember[]
+  tickets        Ticket[]
+  milestones     Milestone[]
+  modules        Module[]
+  attachments    Attachment[]
+  kanbanColumns  KanbanColumn[]
+  sprints        Sprint[]
+  customFields   CustomField[]
+  
+  settings       Json?
+  
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  deletedAt      DateTime?
+  deletedBy      String?
+  archivedAt     DateTime?
+  archivedBy     String?
+  
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@index([parentId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      UserRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+  
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_members")
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tickets     Ticket[]
+  
+  @@index([projectId])
+  @@map("milestones")
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  description String?
+  color       String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tickets     Ticket[]
+  
+  @@index([projectId])
+  @@map("modules")
+}
+
+// =====================================================
+// TICKET / ISSUE SYSTEM
+// =====================================================
+
+model Ticket {
+  id             String         @id @default(cuid())
+  projectId      String
+  
+  number         Int
+  key            String
+  
+  title          String
+  description    String?        
+  
+  type           TicketType     @default(TASK)
+  status         TicketStatus   @default(BACKLOG)
+  priority       TicketPriority @default(MEDIUM)
+  
+  assigneeId     String?
+  assignee       User?          @relation("AssignedTickets", fields: [assigneeId], references: [id])
+  reporterId     String
+  reporter       User           @relation("ReportedTickets", fields: [reporterId], references: [id])
+  
+  parentId       String?
+  parent         Ticket?        @relation("TicketHierarchy", fields: [parentId], references: [id])
+  subtasks       Ticket[]       @relation("TicketHierarchy")
+  
+  milestoneId    String?
+  milestone      Milestone?     @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  moduleId       String?
+  module         Module?        @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  componentId    String?
+  component      Component?     @relation(fields: [componentId], references: [id], onDelete: SetNull)
+  
+  sprintId       String?
+  sprint         Sprint?        @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  columnId       String?
+  column         KanbanColumn?  @relation(fields: [columnId], references: [id], onDelete: SetNull)
+  order          Int            @default(0)
+  
+  storyPoints    Int?
+  estimatedHours Float?
+  
+  dueDate        DateTime?
+  startDate      DateTime?
+  completedAt    DateTime?
+  
+  progress       Int            @default(0)
+  
+  workflowStateId String?
+  
+  comments       Comment[]
+  attachments    Attachment[]
+  timeLogs       TimeLog[]
+  activities     Activity[]
+  dependencies   TicketDependency[]  @relation("TicketDependencies")
+  dependents     TicketDependency[]  @relation("TicketDependents")
+  customFieldValues CustomFieldValue[]
+  tags           TicketTag[]
+  
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  deletedAt      DateTime?
+  deletedBy      String?
+  archivedAt     DateTime?
+  archivedBy     String?
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  @@unique([projectId, number])
+  @@unique([key])
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([priority])
+  @@index([componentId])
+  @@index([deletedAt])
+  @@map("tickets")
+}
+
+model TicketDependency {
+  id             String   @id @default(cuid())
+  ticketId       String
+  dependsOnId    String
+  type           String   @default("blocks")
+  
+  ticket         Ticket   @relation("TicketDependencies", fields: [ticketId], references: [id], onDelete: Cascade)
+  dependsOn      Ticket   @relation("TicketDependents", fields: [dependsOnId], references: [id], onDelete: Cascade)
+  
+  @@unique([ticketId, dependsOnId])
+  @@index([ticketId])
+  @@index([dependsOnId])
+  @@map("ticket_dependencies")
+}
+
+// =====================================================
+// KANBAN BOARD
+// =====================================================
+
+model KanbanColumn {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String
+  color       String?
+  order       Int      @default(0)
+  wipLimit    Int?
+  
+  tickets     Ticket[]
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([projectId])
+  @@map("kanban_columns")
+}
+
+model Sprint {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  goal        String?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean   @default(false)
+  
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tickets     Ticket[]
+  
+  @@index([projectId])
+  @@map("sprints")
+}
+
+// =====================================================
+// COMMENTS & DISCUSSIONS
+// =====================================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  content   String
+  parentId  String?
+  
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([ticketId])
+  @@index([userId])
+  @@map("comments")
+}
+
+// =====================================================
+// TIME TRACKING
+// =====================================================
+
+model TimeLog {
+  id          String   @id @default(cuid())
+  ticketId    String
+  userId      String
+  hours       Float
+  description String?
+  loggedAt    DateTime @default(now())
+  approved    Boolean  @default(false)
+  approvedBy  String?
+  approvedAt  DateTime?
+  
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+  @@index([userId])
+  @@index([loggedAt])
+  @@map("time_logs")
+}
+
+// =====================================================
+// ATTACHMENTS / FILE MANAGEMENT
+// =====================================================
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  
+  ticketId     String?
+  projectId    String?
+  chatMessageId String?
+  wikiPageId   String?
+  userId       String
+  
+  version      Int      @default(1)
+  previousVersionId String?
+  
+  ticket       Ticket?      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chatMessage  ChatMessage? @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+  wikiPage     WikiPage?    @relation(fields: [wikiPageId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([ticketId])
+  @@index([projectId])
+  @@index([chatMessageId])
+  @@index([wikiPageId])
+  @@index([userId])
+  @@map("attachments")
+}
+
+// =====================================================
+// ACTIVITY & NOTIFICATIONS
+// =====================================================
+
+model Activity {
+  id             String       @id @default(cuid())
+  organizationId String
+  projectId      String?
+  ticketId       String?
+  userId         String
+  type           ActivityType
+  description    String        @db.Text
+  metadata       Json?
+  
+  ticket         Ticket?      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime     @default(now())
+  
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// =====================================================
+// CUSTOM FIELDS
+// =====================================================
+
+model CustomField {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String?
+  name           String
+  key            String
+  type           String
+  options        Json?
+  required       Boolean  @default(false)
+  order          Int      @default(0)
+  
+  applyToTickets Boolean  @default(true)
+  applyToProjects Boolean @default(false)
+  
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  values         CustomFieldValue[]
+  
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("custom_fields")
+}
+
+model CustomFieldValue {
+  id             String      @id @default(cuid())
+  customFieldId  String
+  ticketId       String?
+  projectId      String?
+  value          Json
+  
+  customField    CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+  ticket         Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@unique([customFieldId, ticketId])
+  @@index([customFieldId])
+  @@index([ticketId])
+  @@map("custom_field_values")
+}
+
+// =====================================================
+// WORKFLOW ENGINE
+// =====================================================
+
+model Workflow {
+  id             String         @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  isActive       Boolean        @default(true)
+  triggerType    String
+  triggerConfig  Json?
+  
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps          WorkflowStep[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  @@index([organizationId])
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id          String   @id @default(cuid())
+  workflowId  String
+  name        String
+  type        String
+  config      Json
+  order       Int      @default(0)
+  
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  
+  @@index([workflowId])
+  @@map("workflow_steps")
+}
+
+// =====================================================
+// CHAT SYSTEM
+// =====================================================
+
+model ChatChannel {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  type           String        @default("public")
+  isDirect       Boolean       @default(false)
+  
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages       ChatMessage[]
+  members        ChatMember[]
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  @@index([organizationId])
+  @@map("chat_channels")
+}
+
+model ChatMember {
+  id        String      @id @default(cuid())
+  channelId String
+  userId    String
+  joinedAt  DateTime    @default(now())
+  
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([channelId, userId])
+  @@map("chat_members")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  channelId String
+  userId    String
+  content   String      
+  edited    Boolean     @default(false)
+  editedAt  DateTime?
+  
+  channel     ChatChannel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  @@index([channelId])
+  @@index([userId])
+  @@map("chat_messages")
+}
+
+// =====================================================
+// BILLING & SUBSCRIPTIONS (Stripe Ready)
+// =====================================================
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  organizationId        String
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  stripePriceId         String?
+  plan                  SubscriptionPlan   @default(FREE)
+  status                SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean            @default(false)
+  cancelledAt           DateTime?
+  
+  seatsUsed             Int                @default(1)
+  storageUsedMB         Int                @default(0)
+  
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([organizationId])
+  @@index([stripeCustomerId])
+  @@map("subscriptions")
+}
+
+model Invoice {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  stripeInvoiceId    String?
+  stripePaymentIntentId String?
+  amount             Int
+  currency           String   @default("usd")
+  status             String
+  paidAt             DateTime?
+  
+  createdAt          DateTime @default(now())
+  
+  @@index([organizationId])
+  @@map("invoices")
+}
+
+// =====================================================
+// SYSTEM CONFIGURATION
+// =====================================================
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("system_settings")
+}
+
+// =====================================================
+// EMAIL CONFIGURATION
+// =====================================================
+
+enum EmailProviderType {
+  GMAIL
+  BREVO
+  SMTP
+  SENDGRID
+  MAILGUN
+  AMAZON_SES
+  OUTLOOK
+}
+
+model EmailConfiguration {
+  id                String            @id @default(cuid())
+  organizationId    String?
+  name              String
+  provider          EmailProviderType
+  
+  // Gmail OAuth
+  gmailClientId     String?
+  gmailClientSecret String?
+  gmailRefreshToken String?
+  gmailAccessToken  String?
+  gmailTokenExpiry  DateTime?
+  
+  // Brevo
+  brevoApiKey       String?
+  
+  // SendGrid
+  sendGridApiKey    String?
+  
+  // Mailgun
+  mailgunApiKey     String?
+  mailgunDomain     String?
+  
+  // Amazon SES
+  sesAccessKeyId    String?
+  sesSecretAccessKey String?
+  sesRegion         String?
+  
+  // Generic SMTP
+  smtpHost          String?
+  smtpPort          Int?
+  smtpUsername      String?
+  smtpPassword      String?
+  smtpSecure        Boolean           @default(true)
+  
+  // POP3 (for receiving)
+  popHost           String?
+  popPort           Int?
+  popUsername       String?
+  popPassword       String?
+  popSecure         Boolean           @default(true)
+  
+  // Common settings
+  fromEmail         String
+  fromName          String?
+  replyTo           String?
+  
+  isActive          Boolean           @default(true)
+  isDefault         Boolean           @default(false)
+  
+  // Test status
+  lastTestAt        DateTime?
+  lastTestStatus    String?
+  lastTestError     String?
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([organizationId])
+  @@index([provider])
+  @@map("email_configurations")
+}
+
+model EmailTemplate {
+  id                String   @id @default(cuid())
+  organizationId    String?
+  name              String
+  subject           String
+  body              String   @db.Text
+  type              String   // ticket_assigned, ticket_updated, project_invited, etc.
+  variables         Json?    // available variables for template
+  isActive          Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@index([type])
+  @@map("email_templates")
+}
+
+model EmailLog {
+  id                String   @id @default(cuid())
+  configurationId   String?
+  organizationId    String?
+  
+  toEmail           String
+  toName            String?
+  subject           String
+  body              String   @db.Text
+  
+  status            String   // pending, sent, failed
+  errorMessage      String?
+  
+  // Related entities
+  ticketId          String?
+  projectId         String?
+  userId            String?
+  
+  sentAt            DateTime?
+  
+  createdAt         DateTime @default(now())
+  
+  @@index([configurationId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+// =====================================================
+// AI CHATBOT
+// =====================================================
+
+model ChatbotConversation {
+  id                String              @id @default(cuid())
+  organizationId    String?
+  userId            String
+  title             String?
+  isActive          Boolean             @default(true)
+  
+  messages          ChatbotMessage[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@index([organizationId])
+  @@index([userId])
+  @@map("chatbot_conversations")
+}
+
+model ChatbotMessage {
+  id                String              @id @default(cuid())
+  conversationId    String
+  role              String              // user, assistant, system
+  content           String              
+  
+  // For triggering actions
+  actionType        String?             // send_email, create_ticket, etc.
+  actionData        Json?
+  actionExecuted    Boolean             @default(false)
+  
+  createdAt         DateTime            @default(now())
+  
+  conversation      ChatbotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
+  @@map("chatbot_messages")
+}
+
+// =====================================================
+// WIKI SYSTEM
+// =====================================================
+
+model WikiPage {
+  id              String       @id @default(cuid())
+  organizationId  String
+  projectId       String?
+  
+  title           String
+  slug            String
+  content         String       
+  
+  parentId        String?
+  parent          WikiPage?    @relation("WikiHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        WikiPage[]   @relation("WikiHierarchy")
+  
+  order           Int          @default(0)
+  isPublished     Boolean      @default(true)
+  
+  authorId        String
+  lastEditorId    String?
+  
+  attachments     Attachment[]
+  versions        WikiVersion[]
+  
+  deletedAt       DateTime?
+  deletedBy       String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("wiki_pages")
+}
+
+model WikiVersion {
+  id              String   @id @default(cuid())
+  pageId          String
+  
+  version         Int
+  title           String
+  content         String   
+  
+  editedBy        String
+  changeSummary   String?
+  
+  page            WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([pageId, version])
+  @@index([pageId])
+  @@index([createdAt])
+  @@map("wiki_versions")
+}
+
+// =====================================================
+// BACKUP & RESTORE
+// =====================================================
+
+enum BackupType {
+  FULL
+  PARTIAL
+  SCHEDULED
+  MANUAL
+}
+
+enum BackupStorage {
+  LOCAL
+  GOOGLE_DRIVE
+  AWS_S3
+  DROPBOX
+}
+
+model Backup {
+  id                String        @id @default(cuid())
+  organizationId    String
+  
+  name              String
+  type              BackupType
+  storage           BackupStorage
+  
+  // File info
+  filename          String
+  fileSize          Int           // in bytes
+  fileUrl           String?
+  
+  // Google Drive
+  googleDriveFileId String?
+  googleDriveLink   String?
+  
+  // Status
+  status            String        // pending, completed, failed, restoring
+  error             String?
+  
+  // Contents
+  includeUsers      Boolean       @default(true)
+  includeProjects   Boolean       @default(true)
+  includeTickets    Boolean       @default(true)
+  includeWiki       Boolean       @default(true)
+  includeSettings   Boolean       @default(true)
+  includeAttachments Boolean      @default(true)
+  
+  // Metadata
+  startedAt         DateTime?
+  completedAt       DateTime?
+  duration          Int?          // in seconds
+  
+  createdBy         String
+  
+  createdAt         DateTime      @default(now())
+  
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("backups")
+}
+
+model BackupSchedule {
+  id                String      @id @default(cuid())
+  organizationId    String
+  
+  name              String
+  frequency         String      // daily, weekly, monthly
+  time              String      // HH:mm format
+  dayOfWeek         Int?        // 0-6 for weekly
+  dayOfMonth        Int?        // 1-31 for monthly
+  
+  storage           BackupStorage
+  
+  includeUsers      Boolean     @default(true)
+  includeProjects   Boolean     @default(true)
+  includeTickets    Boolean     @default(true)
+  includeWiki       Boolean     @default(true)
+  includeSettings   Boolean     @default(true)
+  includeAttachments Boolean    @default(true)
+  
+  isActive          Boolean     @default(true)
+  lastRunAt         DateTime?
+  nextRunAt         DateTime?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("backup_schedules")
+}
+
+// =====================================================
+// GOOGLE DRIVE INTEGRATION
+// =====================================================
+
+model GoogleDriveConfig {
+  id                String    @id @default(cuid())
+  organizationId    String    @unique
+  
+  clientId          String
+  clientSecret      String
+  refreshToken      String
+  accessToken       String?
+  tokenExpiry       DateTime?
+  
+  rootFolderId      String?
+  backupFolderId    String?
+  attachmentsFolderId String?
+  
+  isActive          Boolean   @default(true)
+  lastSyncAt        DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@map("google_drive_configs")
+}
+
+// =====================================================
+// ROADMAP & GOALS (Asana-like)
+// =====================================================
+
+model Roadmap {
+  id              String       @id @default(cuid())
+  organizationId  String
+  projectId       String?
+  
+  name            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  
+  isActive        Boolean      @default(true)
+  
+  milestones      RoadmapMilestone[]
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("roadmaps")
+}
+
+model RoadmapMilestone {
+  id              String       @id @default(cuid())
+  roadmapId       String
+  
+  title           String
+  description     String?
+  dueDate         DateTime
+  isCompleted     Boolean      @default(false)
+  completedAt     DateTime?
+  
+  order           Int          @default(0)
+  
+  roadmap         Roadmap      @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([roadmapId])
+  @@map("roadmap_milestones")
+}
+
+// =====================================================
+// AUTOMATION RULES
+// =====================================================
+
+model AutomationRule {
+  id              String       @id @default(cuid())
+  organizationId  String
+  projectId       String?
+  
+  name            String
+  description     String?
+  isActive        Boolean      @default(true)
+  
+  triggerType     String       // ticket_created, ticket_updated, ticket_assigned, etc.
+  triggerConfig   Json?
+  
+  conditions      Json?        // Array of conditions
+  
+  actionType      String       // send_email, update_field, create_ticket, etc.
+  actionConfig    Json?
+  
+  executionCount  Int          @default(0)
+  lastExecutedAt  DateTime?
+  
+  createdBy       String
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([triggerType])
+  @@map("automation_rules")
+}
+
+// =====================================================
+// TEAM WORKLOAD (Asana-like)
+// =====================================================
+
+model WorkloadProfile {
+  id                String    @id @default(cuid())
+  organizationId    String
+  userId            String
+  
+  weeklyCapacity    Float     // hours per week
+  workingDays       Json?     // [1,2,3,4,5] for Mon-Fri
+  workingHours      Json?     // { start: "09:00", end: "17:00" }
+  
+  currentLoad       Float     @default(0)  // current assigned hours
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@map("workload_profiles")
+}
+
+// =====================================================
+// NEWS & ANNOUNCEMENTS (Redmine-like)
+// =====================================================
+
+model Announcement {
+  id              String      @id @default(cuid())
+  organizationId  String
+  projectId       String?
+  
+  title           String
+  content         String      
+  summary         String?
+  
+  isPinned        Boolean     @default(false)
+  isPublished     Boolean     @default(true)
+  
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  
+  authorId        String
+  viewCount       Int         @default(0)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([isPinned])
+  @@index([publishedAt])
+  @@map("announcements")
+}
+
+// =====================================================
+// COMPONENTS / MODULES (Jira-like)
+// =====================================================
+
+model Component {
+  id              String       @id @default(cuid())
+  projectId       String
+  
+  name            String
+  description     String?
+  color           String?
+  
+  leadId          String?
+  defaultAssigneeId String?
+  
+  order           Int          @default(0)
+  isActive        Boolean      @default(true)
+  
+  tickets         Ticket[]
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("components")
+}
+
+// =====================================================
+// TAGS SYSTEM
+// =====================================================
+
+model Tag {
+  id              String     @id @default(cuid())
+  organizationId  String
+  name            String
+  color           String?
+  
+  tickets         TicketTag[]
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("tags")
+}
+
+model TicketTag {
+  id        String   @id @default(cuid())
+  ticketId  String
+  tagId     String
+  
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([ticketId, tagId])
+  @@index([ticketId])
+  @@index([tagId])
+  @@map("ticket_tags")
+}
+
+// =====================================================
+// AUDIT LOG (Enterprise)
+// =====================================================
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String?
+  projectId       String?
+  
+  entityType      String   // TICKET, PROJECT, USER, WIKI_PAGE, etc.
+  entityId        String
+  action          String   // CREATE, UPDATE, DELETE, ASSIGN, etc.
+  
+  oldValue        Json?
+  newValue        Json?
+  
+  performedBy     String
+  ipAddress       String?
+  userAgent       String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([performedBy])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// =====================================================
+// USER PREFERENCES
+// =====================================================
+
+model UserPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  
+  theme           String   @default("dark")
+  language        String   @default("en")
+  timezone        String?
+  
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  weeklyDigest         Boolean @default(true)
+  
+  defaultProjectView   String  @default("kanban") // kanban, list, gantt
+  compactMode          Boolean @default(false)
+  
+  shortcuts      Json?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@map("user_preferences")
+}
+
+// =====================================================
+// WEBHOOKS SYSTEM
+// =====================================================
+
+model Webhook {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  name            String
+  url             String
+  secret          String
+  events          Json      // Array of event types
+  headers         Json?
+  
+  isActive        Boolean   @default(true)
+  
+  retryCount      Int       @default(3)
+  timeout         Int       @default(5000)
+  
+  createdBy       String
+  
+  deliveries      WebhookDelivery[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id              String   @id @default(cuid())
+  webhookId       String
+  
+  event           String
+  statusCode      Int?
+  success         Boolean  @default(false)
+  attempt         Int      @default(1)
+  error           String?
+  
+  webhook         Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([webhookId])
+  @@index([success])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+// =====================================================
+// TWO-FACTOR AUTHENTICATION
+// =====================================================
+
+model TwoFactorAuth {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  
+  secret          String   // TOTP secret (encrypted)
+  backupCodes     Json     // Array of hashed backup codes
+  
+  isEnabled       Boolean  @default(false)
+  verifiedAt      DateTime?
+  
+  lastUsedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("two_factor_auth")
+}
+
+model TwoFactorChallenge {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  code            String   // Challenge code
+  type            String   // totp, backup, sms, email
+  
+  verified        Boolean  @default(false)
+  expiresAt       DateTime
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("two_factor_challenges")
+}
+
+// =====================================================
+// SSO (Single Sign-On)
+// =====================================================
+
+model SSOProvider {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  name            String   // Display name
+  type            String   // saml, oidc, oauth2
+  config          Json     // Provider-specific configuration
+  
+  domain          String?  // Email domain for auto-detection
+  isActive        Boolean  @default(true)
+  
+  autoProvision   Boolean  @default(true)
+  defaultRole     String   @default("MEMBER")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([domain])
+  @@map("sso_providers")
+}
+
+model UserSession {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  token           String   @unique
+  userAgent       String?
+  ipAddress       String?
+  
+  expiresAt       DateTime
+  lastAccessedAt  DateTime @default(now())
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+// =====================================================
+// API KEYS
+// =====================================================
+
+model ApiKey {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  
+  name            String
+  key             String   @unique
+  keyPrefix       String   // First 8 chars for identification
+  
+  scopes          Json     // Array of allowed scopes
+  rateLimit       Int      @default(1000)  // Requests per hour
+  
+  lastUsedAt      DateTime?
+  expiresAt       DateTime?
+  
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@index([userId])
+  @@index([keyPrefix])
+  @@map("api_keys")
+}
+
+// =====================================================
+// EDUCATION MODULE
+// =====================================================
+
+model EduSession {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  name            String   // e.g., "2024-2025 Academic Year"
+  startDate       DateTime
+  endDate         DateTime // Auto-calculated: 9 months from start
+  
+  isActive        Boolean  @default(true)
+  isCurrent       Boolean  @default(false)
+  
+  description     String?
+  
+  classes         EduClass[]
+  students        Student[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("edu_sessions")
+}
+
+model EduClass {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  name            String   // e.g., "Class 10-A"
+  grade           String?  // e.g., "10th Grade"
+  section         String?  // e.g., "A"
+  
+  teacherId       String?  // Class teacher
+  teacher         Teacher? @relation(fields: [teacherId], references: [id])
+  
+  sessionId       String?  // Academic session
+  session         EduSession? @relation(fields: [sessionId], references: [id])
+  
+  capacity        Int      @default(30)
+  
+  roomNumber      String?
+  schedule        Json?    // Class schedule
+  
+  isActive        Boolean  @default(true)
+  
+  students        Student[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@index([teacherId])
+  @@index([sessionId])
+  @@map("edu_classes")
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  studentId       String   // Unique student identifier
+  firstName       String
+  lastName        String
+  
+  dateOfBirth     DateTime?
+  gender          String?  // Male, Female, Other
+  
+  email           String?
+  phone           String?
+  address         String?
+  
+  // Primary Guardian
+  guardianName        String?
+  guardianPhone       String?
+  guardianEmail       String?
+  guardianAddress     String?
+  guardianRelation    String?  // Father, Mother, Guardian, etc.
+  
+  // Second Guardian
+  guardian2Name       String?
+  guardian2Phone      String?
+  guardian2Email      String?
+  guardian2Address    String?
+  guardian2Relation   String?
+  
+  // Academic Info
+  classId         String?
+  class           EduClass? @relation(fields: [classId], references: [id])
+  
+  sessionId       String?
+  session         EduSession? @relation(fields: [sessionId], references: [id])
+  
+  enrollmentDate  DateTime?
+  sessionStartDate DateTime? // Independent from enrollment date
+  
+  status          String   @default("active") // active, graduated, transferred, dropped
+  
+  grades          StudentGrade[]
+  attendance      StudentAttendance[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([organizationId, studentId])
+  @@index([organizationId])
+  @@index([classId])
+  @@index([sessionId])
+  @@index([status])
+  @@map("students")
+}
+
+model Teacher {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  employeeId      String   // Unique employee identifier
+  firstName       String
+  lastName        String
+  
+  email           String?
+  phone           String?
+  address         String?
+  
+  dateOfBirth     DateTime?
+  gender          String?
+  
+  qualification   String?  // PhD, Masters, Bachelors, etc.
+  specialization  String?  // Math, Science, English, etc.
+  
+  joiningDate     DateTime?
+  status          String   @default("active") // active, on_leave, resigned, terminated
+  
+  classes         EduClass[]  // Classes they teach
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([organizationId, employeeId])
+  @@index([organizationId])
+  @@index([status])
+  @@map("teachers")
+}
+
+model StudentGrade {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  studentId       String
+  sessionId       String?
+  classId         String?
+  
+  subject         String
+  term            String?  // Quarter, Semester, Final
+  
+  grade           String?  // A, B, C or numeric
+  score           Float?   // Numeric score
+  maxScore        Float?   // Max possible score
+  
+  comments        String?
+  
+  gradedBy        String?  // Teacher ID
+  gradedAt        DateTime?
+  
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([sessionId])
+  @@index([classId])
+  @@map("student_grades")
+}
+
+model StudentAttendance {
+  id              String   @id @default(cuid())
+  organizationId  String
+  
+  studentId       String
+  classId         String?
+  sessionId       String?
+  
+  date            DateTime
+  status          String   // present, absent, late, excused
+  
+  remarks         String?
+  
+  markedBy        String?  // Teacher ID
+  
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([studentId, date])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([date])
+  @@index([classId])
+  @@map("student_attendance")
+}
+
+model SchoolSettings {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  
+  schoolName      String
+  schoolLogo      String?
+  schoolAddress   String?
+  schoolPhone     String?
+  schoolEmail     String?
+  
+  principalName   String?
+  
+  academicYearStart Int?   // Month (1-12)
+  academicYearEnd   Int?   // Month (1-12)
+  
+  gradingScale    Json?    // Grading scale configuration
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([organizationId])
+  @@map("school_settings")
+}
+
+// =====================================================
+// WHATSAPP BUSINESS API INTEGRATION
+// =====================================================
+
+model WhatsAppConfig {
+  id                String    @id @default(cuid())
+  organizationId    String    @unique
+  
+  // WhatsApp Business API credentials
+  accessToken       String    // Encrypted
+  phoneNumberId     String    // WhatsApp Phone Number ID
+  businessAccountId String    // WhatsApp Business Account ID
+  
+  // Webhook verification
+  webhookVerifyToken String?
+  
+  // Status
+  isActive          Boolean   @default(false)
+  lastTestAt        DateTime?
+  lastTestStatus    String?
+  lastTestError     String?
+  
+  // Rate limiting
+  dailyLimit        Int       @default(1000)
+  dailySent         Int       @default(0)
+  limitResetAt      DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@map("whatsapp_configs")
+}
+
+model MessageTemplate {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String
+  category          String    // absence, delay, reminder, fee, event, custom
+  
+  // Template content with variables support
+  subject           String?
+  body              String    @db.Text  // Supports {{variable}} syntax
+  
+  // Variable definitions
+  variables         Json?     // ["student_name", "date", "class_name"]
+  
+  // WhatsApp template ID (for approved templates)
+  whatsappTemplateId String?
+  approvalStatus    String?   // pending, approved, rejected
+  
+  isActive          Boolean   @default(true)
+  isDefault         Boolean   @default(false)
+  
+  // Usage tracking
+  usageCount        Int       @default(0)
+  lastUsedAt        DateTime?
+  
+  createdBy         String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([category])
+  @@map("message_templates")
+}
+
+model CommunicationLog {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  // Recipient info
+  studentId         String?
+  teacherId         String?
+  recipientPhone    String
+  recipientName     String?
+  
+  // Message info
+  templateId        String?
+  messageContent    String    @db.Text
+  
+  // Channel
+  channel           String    @default("whatsapp") // whatsapp, email, sms
+  
+  // Status
+  status            String    @default("pending") // pending, sent, delivered, failed
+  errorMessage      String?
+  externalMessageId String?   // WhatsApp message ID
+  
+  // Automation info
+  triggeredBy       String?   // attendance_automation, manual, fee_reminder
+  triggerRefId      String?   // Reference to trigger entity (attendance ID, etc.)
+  
+  // Timestamps
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  
+  // Cost tracking
+  cost              Float?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([status])
+  @@index([channel])
+  @@index([createdAt])
+  @@map("communication_logs")
+}
+
+// =====================================================
+// ATTENDANCE AUTOMATION ENGINE
+// =====================================================
+
+model AttendanceAutomation {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String
+  description       String?
+  
+  // Trigger conditions
+  triggerType       String    // absence, late, consecutive_absence
+  consecutiveDays   Int?      // For consecutive absence trigger
+  
+  // Actions
+  actionType        String    // send_message, notify_director, both
+  templateId        String?
+  
+  // Settings
+  sendToParent      Boolean   @default(true)
+  sendToDirector    Boolean   @default(false)
+  directorEmail     String?
+  
+  // Timing
+  sendDelay         Int       @default(0)  // Minutes after attendance marked
+  
+  isActive          Boolean   @default(true)
+  
+  // Stats
+  executionCount    Int       @default(0)
+  lastExecutedAt    DateTime?
+  
+  createdBy         String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([triggerType])
+  @@map("attendance_automations")
+}
+
+// =====================================================
+// ACADEMIC YEAR (Enhanced)
+// =====================================================
+
+model AcademicYear {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String    // e.g., "2025-2026"
+  displayName       String?   // e.g., "Academic Year 2025-2026"
+  
+  startDate         DateTime
+  endDate           DateTime
+  
+  status            String    @default("active") // active, archived, upcoming
+  
+  // Terms/Semesters
+  terms             AcademicTerm[]
+  
+  isCurrent         Boolean   @default(false)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([status])
+  @@map("academic_years")
+}
+
+model AcademicTerm {
+  id                String    @id @default(cuid())
+  organizationId    String
+  academicYearId    String
+  
+  name              String    // e.g., "First Semester", "Q1"
+  startDate         DateTime
+  endDate           DateTime
+  
+  status            String    @default("upcoming") // upcoming, active, completed
+  
+  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([academicYearId, name])
+  @@index([organizationId])
+  @@index([academicYearId])
+  @@map("academic_terms")
+}
+
+// =====================================================
+// FEE MANAGEMENT
+// =====================================================
+
+model FeeStructure {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String    // e.g., "Tuition Fee", "Transportation Fee"
+  amount            Float
+  frequency         String    // monthly, quarterly, yearly, one_time
+  
+  classId           String?   // NULL = applies to all classes
+  
+  academicYearId    String?
+  
+  dueDay            Int?      // Day of month for recurring fees
+  
+  isActive          Boolean   @default(true)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([classId])
+  @@map("fee_structures")
+}
+
+model StudentFee {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  studentId         String
+  feeStructureId    String
+  
+  amount            Float
+  dueDate           DateTime
+  
+  status            String    @default("pending") // pending, paid, overdue, waived
+  
+  paidAmount        Float     @default(0)
+  paidDate          DateTime?
+  paymentMethod     String?
+  transactionRef    String?
+  
+  // Late fee
+  lateFeeAmount     Float     @default(0)
+  
+  // Waiver
+  waiverAmount      Float     @default(0)
+  waiverReason      String?
+  
+  // Reminders
+  reminderCount     Int       @default(0)
+  lastReminderAt    DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("student_fees")
+}
+
+// =====================================================
+// EXAM & HOMEWORK
+// =====================================================
+
+model Exam {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String
+  description       String?
+  
+  classId           String
+  subject           String?
+  
+  examDate          DateTime
+  duration          Int?      // Minutes
+  
+  totalMarks        Float
+  passingMarks      Float?
+  
+  academicTermId    String?
+  
+  createdBy         String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([classId])
+  @@index([examDate])
+  @@map("exams")
+}
+
+model Homework {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  title             String
+  description       String    @db.Text
+  
+  classId           String
+  subject           String?
+  
+  assignedDate      DateTime
+  dueDate           DateTime
+  
+  attachments       Json?     // Array of file URLs
+  
+  createdBy         String?   // Teacher ID
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([classId])
+  @@index([dueDate])
+  @@map("homeworks")
+}
+
+model HomeworkSubmission {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  homeworkId        String
+  studentId         String
+  
+  submittedAt       DateTime?
+  content           String?   @db.Text
+  attachments       Json?     // Array of file URLs
+  
+  status            String    @default("pending") // pending, submitted, graded
+  grade             String?
+  score             Float?
+  feedback          String?
+  
+  gradedBy          String?
+  gradedAt          DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([homeworkId, studentId])
+  @@index([organizationId])
+  @@index([homeworkId])
+  @@index([studentId])
+  @@map("homework_submissions")
+}
+
+// =====================================================
+// STAFF TASK ASSIGNMENT
+// =====================================================
+
+model StaffTask {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  title             String
+  description       String?   @db.Text
+  
+  assignedTo        String    // Teacher ID
+  assignedBy        String?   // User ID (Director/Admin)
+  
+  dueDate           DateTime?
+  priority          String    @default("medium") // low, medium, high
+  
+  status            String    @default("pending") // pending, in_progress, completed, cancelled
+  
+  completedAt       DateTime?
+  notes             String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([assignedTo])
+  @@index([status])
+  @@map("staff_tasks")
+}
