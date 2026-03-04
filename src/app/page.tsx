@@ -1,4 +1,4 @@
-import MainDashboard from "@/components/dashboard/main-dashboard";
+import { MainDashboard } from "@/components/dashboard/main-dashboard";
 
 // Force dynamic rendering to avoid prerender errors with useSession
 export const dynamic = 'force-dynamic';

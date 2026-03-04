@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/app-store";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -43,6 +45,7 @@ import {
   Megaphone,
   BookOpen,
   Mail,
+  GraduationCap,
 } from "lucide-react";
 
 interface NavItem {

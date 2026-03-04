@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,6 +37,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import {
   GraduationCap,
@@ -63,7 +67,20 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  FileText,
+  Download,
+  Filter,
+  Calculator,
+  Award,
+  TrendingUp,
+  ExternalLink,
+  Save,
+  Eye,
+  Copy,
+  Upload,
+  CalendarDays,
 } from "lucide-react";
+import { ClassScheduler } from "./class-scheduler";
 import { format } from "date-fns";
 
 // Types
@@ -94,7 +111,7 @@ interface Student {
   status: string;
   class?: { id: string; name: string; grade?: string };
   session?: { id: string; name: string };
-  grades?: { id: string; subject: string; grade?: string; score?: number }[];
+  grades?: { id: string; subject: string; grade?: string; score?: number; gradeType?: string; period?: string }[];
   _count?: { grades: number; attendance: number };
 }
 
@@ -151,13 +168,81 @@ interface SchoolSettings {
   principalName?: string;
 }
 
+interface MessageTemplate {
+  id: string;
+  name: string;
+  category: string;
+  subject?: string;
+  body: string;
+  variables?: string[];
+  isActive: boolean;
+  isDefault: boolean;
+  usageCount: number;
+  lastUsedAt?: string;
+  createdAt: string;
+}
+
+interface CommunicationLog {
+  id: string;
+  studentId?: string;
+  recipientPhone: string;
+  recipientName?: string;
+  messageContent: string;
+  channel: string;
+  status: string;
+  errorMessage?: string;
+  triggeredBy?: string;
+  sentAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
+  student?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    studentId: string;
+  };
+}
+
+interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  classId?: string;
+  sessionId?: string;
+  date: string;
+  status: string;
+  remarks?: string;
+  markedBy?: string;
+  student?: {
+    id: string;
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    class?: { id: string; name: string };
+  };
+}
+
+interface StudentGrade {
+  id: string;
+  studentId: string;
+  sessionId?: string;
+  classId?: string;
+  subject: string;
+  term?: string;
+  grade?: string;
+  score?: number;
+  maxScore?: number;
+  gradeType?: string;
+  period?: string;
+  comments?: string;
+  gradedAt?: string;
+}
+
 export function EducationDashboard() {
   const { data: session, status } = useSession();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
   // Data states
   const [students, setStudents] = useState<Student[]>([]);
@@ -165,6 +250,10 @@ export function EducationDashboard() {
   const [classes, setClasses] = useState<EduClass[]>([]);
   const [sessions, setSessions] = useState<EduSession[]>([]);
   const [schoolSettings, setSchoolSettings] = useState<SchoolSettings | null>(null);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [communicationLogs, setCommunicationLogs] = useState<CommunicationLog[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [studentGrades, setStudentGrades] = useState<StudentGrade[]>([]);
 
   // Dialog states
   const [studentDialog, setStudentDialog] = useState(false);
@@ -175,6 +264,26 @@ export function EducationDashboard() {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [gradeDialog, setGradeDialog] = useState(false);
   const [messageDialog, setMessageDialog] = useState(false);
+  const [templateDialog, setTemplateDialog] = useState(false);
+  const [transcriptDialog, setTranscriptDialog] = useState(false);
+  const [studentImportDialog, setStudentImportDialog] = useState(false);
+  const [teacherImportDialog, setTeacherImportDialog] = useState(false);
+
+  // Import states
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+
+  // Modules state
+  const [modules, setModules] = useState<any[]>([]);
+  const [moduleDialog, setModuleDialog] = useState(false);
+  const [moduleForm, setModuleForm] = useState({
+    name: "",
+    code: "",
+    description: "",
+    color: "#3B82F6",
+    creditHours: 1,
+  });
 
   // Edit states
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -184,13 +293,38 @@ export function EducationDashboard() {
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: string } | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedStudentForMessage, setSelectedStudentForMessage] = useState<Student | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
   const [customMessage, setCustomMessage] = useState("");
-  const [messageTemplates, setMessageTemplates] = useState([
-    { id: "greeting", name: "Default Greeting", template: "Dear Parent/Guardian of {{student_name}}, this is a message from {{school_name}}." },
-    { id: "reminder", name: "Activity Reminder", template: "Dear Parent/Guardian, we would like to remind you about the upcoming school activities for {{student_name}}. Thank you." },
-    { id: "absence", name: "Absence Notification", template: "Dear Parent/Guardian, we noticed that {{student_name}} was absent today. Please contact the school if there are any concerns. - {{school_name}}" },
-    { id: "late", name: "Late Arrival", template: "Dear Parent/Guardian, {{student_name}} arrived late to school today. Please ensure timely attendance. - {{school_name}}" },
-  ]);
+
+  // Attendance states
+  const [attendanceClassId, setAttendanceClassId] = useState("");
+  const [attendanceDate, setAttendanceDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [attendanceRecords_local, setAttendanceRecordsLocal] = useState<{ [studentId: string]: { status: string; remarks: string } }>({});
+  const [attendanceStats, setAttendanceStats] = useState<{ total: number; present: number; absent: number; late: number; excused: number } | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [savingAttendance, setSavingAttendance] = useState(false);
+
+  // Grades states
+  const [selectedStudentForGrades, setSelectedStudentForGrades] = useState<Student | null>(null);
+  const [gradeForm, setGradeForm] = useState({
+    subject: "",
+    gradeType: "CC",
+    period: "1",
+    score: "",
+    maxScore: "20",
+    comments: "",
+  });
+
+  // Log filter states
+  const [logFilters, setLogFilters] = useState({
+    startDate: "",
+    endDate: "",
+    status: "",
+  });
+
+  
+  // Presentation score state for 18-month grading
+  const [presentationScore, setPresentationScore] = useState<string>("");
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -261,123 +395,99 @@ export function EducationDashboard() {
     principalName: "",
   });
 
+  const [templateForm, setTemplateForm] = useState({
+    name: "",
+    category: "absence",
+    subject: "",
+    body: "",
+    isDefault: false,
+    usePredefined: false,
+  });
+
   // Search states
   const [studentSearch, setStudentSearch] = useState("");
   const [teacherSearch, setTeacherSearch] = useState("");
 
-  // Attendance states
-  const [attendanceClassId, setAttendanceClassId] = useState("");
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendanceSessionId, setAttendanceSessionId] = useState("");
-  const [attendanceStudents, setAttendanceStudents] = useState<Student[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, { status: string; remarks: string }>>({});
-  const [attendanceStats, setAttendanceStats] = useState<{ total: number; present: number; absent: number; late: number; excused: number } | null>(null);
-  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
-  const [savingAttendance, setSavingAttendance] = useState(false);
+  // Fetch modules
+  const fetchModules = useCallback(async () => {
+    try {
+      const res = await fetch("/api/education/modules");
+      if (res.ok) {
+        const response = await res.json();
+        setModules(response.data?.modules || response.modules || []);
+      }
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchModules();
+    }
+  }, [session, fetchModules]);
 
   // Fetch all data
   const fetchData = useCallback(async () => {
-    // Don't fetch if session is still loading
-    if (status === "loading") return;
-    
-    // If not authenticated, show message and stop loading
-    if (status === "unauthenticated" || !session?.user) {
-      setLoading(false);
-      setError("Please log in to view education data");
-      return;
-    }
-
+    if (!session?.user) return;
     setLoading(true);
-    setError(null);
-    
     try {
-      console.log("[Education] Fetching data for user:", session.user.email);
-      
-      const [studentsRes, teachersRes, classesRes, sessionsRes, settingsRes] = await Promise.all([
+      const [studentsRes, teachersRes, classesRes, sessionsRes, settingsRes, templatesRes] = await Promise.all([
         fetch("/api/education/students"),
         fetch("/api/education/teachers"),
         fetch("/api/education/classes"),
         fetch("/api/education/sessions"),
         fetch("/api/education/school-settings"),
+        fetch("/api/education/message-templates"),
       ]);
-
-      console.log("[Education] API Responses:", {
-        students: studentsRes.status,
-        teachers: teachersRes.status,
-        classes: classesRes.status,
-        sessions: sessionsRes.status,
-        settings: settingsRes.status,
-      });
-
-      // Handle students response
+      
       if (studentsRes.ok) {
-        const data = await studentsRes.json();
-        console.log("[Education] Students data:", data);
-        // API returns { success: true, data: { students: [...] } }
-        setStudents(data.data?.students || data.students || []);
-      } else {
-        const errData = await studentsRes.json().catch(() => ({}));
-        console.error("[Education] Students API error:", errData);
+        const response = await studentsRes.json();
+        const studentsData = response.data?.students || response.students || [];
+        setStudents(studentsData);
       }
-
-      // Handle teachers response
+      
       if (teachersRes.ok) {
-        const data = await teachersRes.json();
-        console.log("[Education] Teachers data:", data);
-        // API returns { success: true, data: { teachers: [...] } }
-        setTeachers(data.data?.teachers || data.teachers || []);
-      } else {
-        const errData = await teachersRes.json().catch(() => ({}));
-        console.error("[Education] Teachers API error:", errData);
+        const response = await teachersRes.json();
+        const teachersData = response.data?.teachers || response.teachers || [];
+        setTeachers(teachersData);
       }
-
-      // Handle classes response
+      
       if (classesRes.ok) {
-        const data = await classesRes.json();
-        console.log("[Education] Classes data:", data);
-        // API returns { success: true, data: { classes: [...] } }
-        setClasses(data.data?.classes || data.classes || []);
-      } else {
-        const errData = await classesRes.json().catch(() => ({}));
-        console.error("[Education] Classes API error:", errData);
+        const response = await classesRes.json();
+        const classesData = response.data?.classes || response.classes || [];
+        setClasses(classesData);
       }
-
-      // Handle sessions response
+      
       if (sessionsRes.ok) {
-        const data = await sessionsRes.json();
-        console.log("[Education] Sessions data:", data);
-        // API returns { success: true, data: { sessions: [...] } }
-        setSessions(data.data?.sessions || data.sessions || []);
-      } else {
-        const errData = await sessionsRes.json().catch(() => ({}));
-        console.error("[Education] Sessions API error:", errData);
+        const response = await sessionsRes.json();
+        const sessionsData = response.data?.sessions || response.sessions || [];
+        setSessions(sessionsData);
       }
-
-      // Handle settings response
+      
       if (settingsRes.ok) {
-        const data = await settingsRes.json();
-        console.log("[Education] Settings data:", data);
-        // API returns { success: true, data: { settings: {...} } }
-        const settings = data.data?.settings || data.settings;
-        setSchoolSettings(settings);
-        if (settings) {
+        const response = await settingsRes.json();
+        const settingsData = response.data?.settings || response.settings || null;
+        setSchoolSettings(settingsData);
+        if (settingsData) {
           setSettingsForm({
-            schoolName: settings.schoolName || "",
-            schoolLogo: settings.schoolLogo || "",
-            schoolAddress: settings.schoolAddress || "",
-            schoolPhone: settings.schoolPhone || "",
-            schoolEmail: settings.schoolEmail || "",
-            principalName: settings.principalName || "",
+            schoolName: settingsData.schoolName || "",
+            schoolLogo: settingsData.schoolLogo || "",
+            schoolAddress: settingsData.schoolAddress || "",
+            schoolPhone: settingsData.schoolPhone || "",
+            schoolEmail: settingsData.schoolEmail || "",
+            principalName: settingsData.principalName || "",
           });
         }
-      } else {
-        const errData = await settingsRes.json().catch(() => ({}));
-        console.error("[Education] Settings API error:", errData);
       }
 
+      if (templatesRes.ok) {
+        const response = await templatesRes.json();
+        const templatesData = response.data?.templates || response.templates || [];
+        setTemplates(templatesData);
+      }
     } catch (error) {
-      console.error("[Education] Error fetching education data:", error);
-      setError("Failed to fetch education data. Please try again.");
+      console.error("Error fetching education data:", error);
       toast({
         title: "Error",
         description: "Failed to fetch education data",
@@ -386,11 +496,93 @@ export function EducationDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [session, status, toast]);
+  }, [session, toast]);
+
+  // Fetch communication logs
+  const fetchCommunicationLogs = useCallback(async () => {
+    if (!session?.user) return;
+    try {
+      const params = new URLSearchParams();
+      if (logFilters.startDate) params.append("startDate", logFilters.startDate);
+      if (logFilters.endDate) params.append("endDate", logFilters.endDate);
+      if (logFilters.status) params.append("status", logFilters.status);
+
+      const res = await fetch(`/api/education/communication-logs?${params.toString()}`);
+      if (res.ok) {
+        const response = await res.json();
+        setCommunicationLogs(response.data?.logs || response.logs || []);
+      } else {
+        console.error("Failed to fetch communication logs:", res.status);
+        setCommunicationLogs([]);
+      }
+    } catch (error) {
+      console.error("Error fetching communication logs:", error);
+      setCommunicationLogs([]);
+    }
+  }, [session, logFilters]);
+
+  // Fetch attendance for class and date
+  const fetchAttendance = useCallback(async () => {
+    if (!attendanceClassId || !attendanceDate) return;
+    try {
+      const res = await fetch(`/api/education/attendance?classId=${attendanceClassId}&date=${attendanceDate}`);
+      if (res.ok) {
+        const response = await res.json();
+        const attendanceData = response.data?.attendance || response.attendance || [];
+        setAttendanceRecords(attendanceData);
+        
+        const statsData = response.data?.stats || response.stats;
+        setAttendanceStats(statsData);
+        
+        // Initialize local attendance records
+        const classStudents = students.filter(s => s.classId === attendanceClassId);
+        const initialRecords: { [studentId: string]: { status: string; remarks: string } } = {};
+        
+        classStudents.forEach(student => {
+          const existing = attendanceData.find((a: AttendanceRecord) => a.studentId === student.id);
+          initialRecords[student.id] = {
+            status: existing?.status || "present",
+            remarks: existing?.remarks || "",
+          };
+        });
+        
+        setAttendanceRecordsLocal(initialRecords);
+      }
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+    }
+  }, [attendanceClassId, attendanceDate, students]);
+
+  // Calculate attendance stats from local records
+  const calculateLocalStats = () => {
+    const records = Object.values(attendanceRecords_local);
+    return {
+      total: records.length,
+      present: records.filter(r => r.status === "present").length,
+      absent: records.filter(r => r.status === "absent").length,
+      late: records.filter(r => r.status === "late").length,
+      excused: records.filter(r => r.status === "excused").length,
+    };
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (session?.user) {
+      fetchData();
+    } else if (status === "unauthenticated") {
+      // Stop loading when unauthenticated - the component will redirect to login
+      setLoading(false);
+    }
+  }, [session, fetchData, status]);
+
+  useEffect(() => {
+    fetchCommunicationLogs();
+  }, [fetchCommunicationLogs]);
+
+  useEffect(() => {
+    if (students.length > 0 && attendanceClassId && attendanceDate) {
+      fetchAttendance();
+    }
+  }, [attendanceClassId, attendanceDate, students, fetchAttendance]);
 
   // Student handlers
   const handleCreateStudent = async () => {
@@ -760,122 +952,53 @@ export function EducationDashboard() {
     setMessageDialog(true);
   };
 
-  const sendWhatsAppMessage = (phone: string, message: string) => {
+  const sendWhatsAppMessage = async (phone: string, message: string, studentId?: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
-  };
 
-  // Attendance Management Functions
-  const loadAttendance = async () => {
-    if (!attendanceClassId || !attendanceDate) {
-      toast({ title: "Error", description: "Please select a class and date", variant: "destructive" });
-      return;
-    }
-
-    try {
-      // Get students for the selected class
-      const classStudents = students.filter(s => s.classId === attendanceClassId);
-      setAttendanceStudents(classStudents);
-
-      // Load existing attendance for this class and date
-      const res = await fetch(`/api/education/attendance?classId=${attendanceClassId}&date=${attendanceDate}`);
-      if (res.ok) {
-        const data = await res.json();
-        const records = data.data?.attendance || data.attendance || [];
-        const stats = data.data?.stats || data.stats || null;
-        
-        // Convert records to a map for easy lookup
-        const recordMap: Record<string, { status: string; remarks: string }> = {};
-        records.forEach((r: any) => {
-          recordMap[r.studentId] = {
-            status: r.status,
-            remarks: r.remarks || "",
-          };
+    // Log the message
+    if (studentId) {
+      try {
+        await fetch("/api/education/communication-logs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId,
+            recipientPhone: phone,
+            recipientName: students.find(s => s.id === studentId)?.guardianName,
+            messageContent: message,
+            channel: "whatsapp",
+            triggeredBy: "manual",
+            status: "sent",
+          }),
         });
-        
-        // Initialize all students with default status
-        classStudents.forEach(student => {
-          if (!recordMap[student.id]) {
-            recordMap[student.id] = { status: "present", remarks: "" };
-          }
-        });
-        
-        setAttendanceRecords(recordMap);
-        setAttendanceStats(stats || {
-          total: classStudents.length,
-          present: classStudents.length,
-          absent: 0,
-          late: 0,
-          excused: 0,
-        });
+        fetchCommunicationLogs();
+      } catch (error) {
+        console.error("Error logging message:", error);
       }
-
-      // Load attendance history
-      const historyRes = await fetch(`/api/education/attendance?limit=20`);
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        setAttendanceHistory(historyData.data?.attendance || historyData.attendance || []);
-      }
-    } catch (error) {
-      console.error("Error loading attendance:", error);
-      toast({ title: "Error", description: "Failed to load attendance data", variant: "destructive" });
     }
   };
 
-  const updateStudentAttendance = (studentId: string, status: string) => {
-    setAttendanceRecords(prev => ({
+  // Attendance handlers
+  const handleAttendanceStatusChange = (studentId: string, status: string) => {
+    setAttendanceRecordsLocal(prev => ({
       ...prev,
       [studentId]: { ...prev[studentId], status },
     }));
-    
-    // Update stats
-    const records = { ...attendanceRecords, [studentId]: { ...attendanceRecords[studentId], status } };
-    const stats = {
-      total: attendanceStudents.length,
-      present: Object.values(records).filter(r => r.status === "present").length,
-      absent: Object.values(records).filter(r => r.status === "absent").length,
-      late: Object.values(records).filter(r => r.status === "late").length,
-      excused: Object.values(records).filter(r => r.status === "excused").length,
-    };
-    setAttendanceStats(stats);
   };
 
-  const updateStudentRemarks = (studentId: string, remarks: string) => {
-    setAttendanceRecords(prev => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], remarks },
-    }));
-  };
-
-  const markAllStudents = (status: string) => {
-    const newRecords: Record<string, { status: string; remarks: string }> = {};
-    attendanceStudents.forEach(student => {
-      newRecords[student.id] = { status, remarks: "" };
-    });
-    setAttendanceRecords(newRecords);
-    
-    setAttendanceStats({
-      total: attendanceStudents.length,
-      present: status === "present" ? attendanceStudents.length : 0,
-      absent: status === "absent" ? attendanceStudents.length : 0,
-      late: status === "late" ? attendanceStudents.length : 0,
-      excused: status === "excused" ? attendanceStudents.length : 0,
-    });
-  };
-
-  const saveAttendance = async () => {
-    if (!attendanceDate) {
-      toast({ title: "Error", description: "Please select a date", variant: "destructive" });
+  const handleSaveAttendance = async () => {
+    if (!attendanceClassId || !attendanceDate) {
+      toast({ title: "Error", description: "Please select class and date", variant: "destructive" });
       return;
     }
 
     setSavingAttendance(true);
     try {
-      const records = Object.entries(attendanceRecords).map(([studentId, data]) => ({
+      const records = Object.entries(attendanceRecords_local).map(([studentId, data]) => ({
         studentId,
         classId: attendanceClassId,
-        sessionId: attendanceSessionId || undefined,
         date: attendanceDate,
         status: data.status,
         remarks: data.remarks,
@@ -888,22 +1011,331 @@ export function EducationDashboard() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        toast({ 
-          title: "Success", 
-          description: `Saved ${records.length} attendance records. ${data.data?.automationTriggers || data.automationTriggers || 0} notifications triggered.` 
-        });
-        loadAttendance();
+        const response = await res.json();
+        toast({ title: "Success", description: response.message || "Attendance saved successfully" });
+        
+        // Trigger WhatsApp for absent AND late students
+        const studentsToNotify = Object.entries(attendanceRecords_local)
+          .filter(([_, data]) => data.status === "absent" || data.status === "late")
+          .map(([studentId, data]) => ({ 
+            student: students.find(s => s.id === studentId), 
+            status: data.status 
+          }))
+          .filter(item => item.student) as { student: Student; status: string }[];
+
+        if (studentsToNotify.length > 0) {
+          for (const { student, status } of studentsToNotify) {
+            if (student.guardianPhone) {
+              // Find appropriate template based on status
+              // "late" status uses "delay" category template
+              const templateCategory = status === "late" ? "delay" : status;
+              const template = templates.find(t => t.category === templateCategory && t.isDefault) || 
+                              templates.find(t => t.category === templateCategory) ||
+                              templates.find(t => t.category === "absence");
+              
+              let message = template?.body || `Dear Parent/Guardian, we are informing you that {{student_name}} was marked {{status}} on {{date}}. {{school_name}}`;
+              message = message
+                .replace(/\{\{student_name\}\}/g, `${student.firstName} ${student.lastName}`)
+                .replace(/\{\{date\}\}/g, format(new Date(attendanceDate), "MMMM dd, yyyy"))
+                .replace(/\{\{class_name\}\}/g, student.class?.name || "")
+                .replace(/\{\{status\}\}/g, status === "late" ? "late" : "absent")
+                .replace(/\{\{school_name\}\}/g, schoolSettings?.schoolName || "School");
+              
+              // Open WhatsApp Web automatically
+              sendWhatsAppMessage(student.guardianPhone, message, student.id);
+            }
+          }
+        }
+
+        fetchAttendance();
       } else {
         const error = await res.json();
         toast({ title: "Error", description: error.error || "Failed to save attendance", variant: "destructive" });
       }
     } catch (error) {
-      console.error("Error saving attendance:", error);
       toast({ title: "Error", description: "Failed to save attendance", variant: "destructive" });
     } finally {
       setSavingAttendance(false);
     }
+  };
+
+  // Template handlers
+  const handleCreateTemplate = async () => {
+    try {
+      let body = templateForm.body;
+      
+      // Use predefined template if selected
+      if (templateForm.usePredefined) {
+        if (templateForm.category === "absence") {
+          body = `Dear Parent/Guardian, we are informing you that {{student_name}} was marked {{status}} on {{date}}. {{school_name}}`;
+        } else if (templateForm.category === "delay") {
+          body = `Dear Parent/Guardian, we are informing you that {{student_name}} arrived late on {{date}}. {{school_name}}`;
+        }
+      }
+
+      const res = await fetch("/api/education/message-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...templateForm,
+          body,
+        }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Template created successfully" });
+        setTemplateDialog(false);
+        resetTemplateForm();
+        fetchData();
+      } else {
+        const error = await res.json();
+        toast({ title: "Error", description: error.error || "Failed to create template", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to create template", variant: "destructive" });
+    }
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!editingTemplate) return;
+    try {
+      const res = await fetch("/api/education/message-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingTemplate.id,
+          ...templateForm,
+        }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Template updated successfully" });
+        setTemplateDialog(false);
+        setEditingTemplate(null);
+        resetTemplateForm();
+        fetchData();
+      } else {
+        const error = await res.json();
+        toast({ title: "Error", description: error.error || "Failed to update template", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update template", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      const res = await fetch(`/api/education/message-templates?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Template deleted successfully" });
+        fetchData();
+      } else {
+        toast({ title: "Error", description: "Failed to delete template", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete template", variant: "destructive" });
+    }
+  };
+
+  const handleSetDefaultTemplate = async (id: string) => {
+    try {
+      const template = templates.find(t => t.id === id);
+      if (!template) return;
+
+      // Unset other defaults of same category
+      const sameCategoryTemplates = templates.filter(t => t.category === template.category && t.isDefault);
+      for (const t of sameCategoryTemplates) {
+        if (t.id !== id) {
+          await fetch("/api/education/message-templates", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: t.id, isDefault: false }),
+          });
+        }
+      }
+
+      const res = await fetch("/api/education/message-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isDefault: true }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Default template updated" });
+        fetchData();
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to set default template", variant: "destructive" });
+    }
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateForm({
+      name: "",
+      category: "absence",
+      subject: "",
+      body: "",
+      isDefault: false,
+      usePredefined: false,
+    });
+    setEditingTemplate(null);
+  };
+
+  // Grade handlers
+  const handleAddGrade = async () => {
+    if (!selectedStudentForGrades) return;
+    try {
+      const res = await fetch("/api/education/grades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: selectedStudentForGrades.id,
+          ...gradeForm,
+          score: parseFloat(gradeForm.score),
+          maxScore: parseFloat(gradeForm.maxScore),
+        }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Grade added successfully" });
+        setGradeForm({ subject: "", gradeType: "CC", period: "1", score: "", maxScore: "20", comments: "" });
+        fetchStudentGrades(selectedStudentForGrades.id);
+      } else {
+        const error = await res.json();
+        toast({ title: "Error", description: error.error || "Failed to add grade", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to add grade", variant: "destructive" });
+    }
+  };
+
+  const fetchStudentGrades = async (studentId: string) => {
+    try {
+      const res = await fetch(`/api/education/grades?studentId=${studentId}`);
+      if (res.ok) {
+        const response = await res.json();
+        setStudentGrades(response.data?.grades || response.grades || []);
+      }
+    } catch (error) {
+      console.error("Error fetching grades:", error);
+    }
+  };
+
+  // Delete grade handler
+  const handleDeleteGrade = async (gradeId: string) => {
+    try {
+      const res = await fetch(`/api/education/grades?id=${gradeId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: "Grade deleted successfully" });
+        if (selectedStudentForGrades) {
+          fetchStudentGrades(selectedStudentForGrades.id);
+        }
+      } else {
+        toast({ title: "Error", description: "Failed to delete grade", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete grade", variant: "destructive" });
+    }
+  };
+
+  // Export logs
+  const exportLogs = () => {
+    const csv = [
+      ["Date", "Student", "Phone", "Message", "Status", "Channel"].join(","),
+      ...communicationLogs.map(log => [
+        format(new Date(log.createdAt), "yyyy-MM-dd HH:mm"),
+        log.student ? `${log.student.firstName} ${log.student.lastName}` : log.recipientName || "",
+        log.recipientPhone,
+        `"${log.messageContent.replace(/"/g, '""')}"`,
+        log.status,
+        log.channel,
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `communication-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Calculate grades for 18-month program
+  const calculateFinalGrade = (grades: StudentGrade[]) => {
+    // Group by period and type
+    const period1 = grades.filter(g => g.period === "1");
+    const period2 = grades.filter(g => g.period === "2");
+
+    const calculatePeriodAverage = (periodGrades: StudentGrade[], type: string) => {
+      const typeGrades = periodGrades.filter(g => g.gradeType === type);
+      if (typeGrades.length === 0) return null;
+      const sum = typeGrades.reduce((acc, g) => acc + (g.score || 0), 0);
+      return sum / typeGrades.length;
+    };
+
+    // Period 1 calculations
+    const p1_CC = calculatePeriodAverage(period1, "CC");
+    const p1_EFCF_T = calculatePeriodAverage(period1, "EFCF_T");
+    const p1_EFCF_P = calculatePeriodAverage(period1, "EFCF_P");
+
+    // Period 2 calculations
+    const p2_CC = calculatePeriodAverage(period2, "CC");
+    const p2_EFCF_T = calculatePeriodAverage(period2, "EFCF_T");
+    const p2_EFCF_P = calculatePeriodAverage(period2, "EFCF_P");
+
+    // Combined averages (only if both periods have data)
+    let combined_CC = null;
+    let combined_EFCF_T = null;
+    let combined_EFCF_P = null;
+
+    if (p1_CC !== null && p2_CC !== null) {
+      combined_CC = (p1_CC + p2_CC) / 2;
+    } else if (p1_CC !== null) {
+      combined_CC = p1_CC;
+    } else if (p2_CC !== null) {
+      combined_CC = p2_CC;
+    }
+
+    if (p1_EFCF_T !== null && p2_EFCF_T !== null) {
+      combined_EFCF_T = (p1_EFCF_T + p2_EFCF_T) / 2;
+    } else if (p1_EFCF_T !== null) {
+      combined_EFCF_T = p1_EFCF_T;
+    } else if (p2_EFCF_T !== null) {
+      combined_EFCF_T = p2_EFCF_T;
+    }
+
+    if (p1_EFCF_P !== null && p2_EFCF_P !== null) {
+      combined_EFCF_P = (p1_EFCF_P + p2_EFCF_P) / 2;
+    } else if (p1_EFCF_P !== null) {
+      combined_EFCF_P = p1_EFCF_P;
+    } else if (p2_EFCF_P !== null) {
+      combined_EFCF_P = p2_EFCF_P;
+    }
+
+    // Final grade formula: (CC × 3 + EFCF_T × 2 + EFCF_P × 3 + Presentation × 2) / 10
+    let finalGrade = null;
+    if (combined_CC !== null || combined_EFCF_T !== null || combined_EFCF_P !== null) {
+      const presScore = presentationScore ? parseFloat(presentationScore) : 0;
+      const ccScore = combined_CC || 0;
+      const efcfTScore = combined_EFCF_T || 0;
+      const efcfPScore = combined_EFCF_P || 0;
+      
+      finalGrade = (ccScore * 3 + efcfTScore * 2 + efcfPScore * 3 + presScore * 2) / 10;
+    }
+
+    return {
+      period1: { CC: p1_CC, EFCF_T: p1_EFCF_T, EFCF_P: p1_EFCF_P },
+      period2: { CC: p2_CC, EFCF_T: p2_EFCF_T, EFCF_P: p2_EFCF_P },
+      combined: { CC: combined_CC, EFCF_T: combined_EFCF_T, EFCF_P: combined_EFCF_P },
+      final: finalGrade,
+    };
   };
 
   // Stats
@@ -917,42 +1349,35 @@ export function EducationDashboard() {
     currentSession: sessions.find(s => s.isCurrent),
   };
 
-  // Show loading spinner while session is loading or data is being fetched
-  if (status === "loading" || loading) {
+  // Show loading spinner while session is loading
+  if (status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex items-center justify-center h-screen">
         <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading education data...</p>
       </div>
     );
   }
 
-  // Show error if not authenticated or other error
-  if (status === "unauthenticated" || !session?.user) {
+  // Redirect to login if not authenticated
+  if (status === "unauthenticated") {
+    signIn();
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertCircle className="h-12 w-12 text-destructive" />
-        <h3 className="text-lg font-semibold">Authentication Required</h3>
-        <p className="text-muted-foreground">Please log in to access the Education module.</p>
-        <Button onClick={() => window.location.href = "/auth/signin"}>Sign In</Button>
+      <div className="flex items-center justify-center h-screen">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Show error message if there was an error
-  if (error) {
+  // Show loading spinner while data is loading
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertCircle className="h-12 w-12 text-destructive" />
-        <h3 className="text-lg font-semibold">Error Loading Data</h3>
-        <p className="text-muted-foreground">{error}</p>
-        <Button onClick={fetchData}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Retry
-        </Button>
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  const classStudents = students.filter(s => s.classId === attendanceClassId);
 
   return (
     <div className="space-y-6">
@@ -961,7 +1386,7 @@ export function EducationDashboard() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <GraduationCap className="h-6 w-6" />
-            Education
+            Education Management
           </h2>
           <p className="text-muted-foreground">
             {schoolSettings?.schoolName || "School Management System"}
@@ -1023,17 +1448,18 @@ export function EducationDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-10">
+        <TabsList className="grid w-full grid-cols-12">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
           <TabsTrigger value="teachers">Teachers</TabsTrigger>
           <TabsTrigger value="classes">Classes</TabsTrigger>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
-          <TabsTrigger value="grades">Grades</TabsTrigger>
           <TabsTrigger value="templates">Messages</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="grades">Grades</TabsTrigger>
+          <TabsTrigger value="scheduler">Scheduler</TabsTrigger>
+          <TabsTrigger value="modules">Modules</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1044,22 +1470,29 @@ export function EducationDashboard() {
                 <CardTitle>Recent Students</CardTitle>
               </CardHeader>
               <CardContent>
-                {students.slice(0, 5).map(student => (
-                  <div key={student.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">{student.firstName} {student.lastName}</p>
-                        <p className="text-xs text-muted-foreground">{student.studentId}</p>
-                      </div>
-                    </div>
-                    <Badge variant={student.status === "active" ? "default" : "secondary"}>
-                      {student.status}
-                    </Badge>
+                {students.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No students added yet</p>
                   </div>
-                ))}
+                ) : (
+                  students.slice(0, 5).map(student => (
+                    <div key={student.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{student.firstName} {student.lastName}</p>
+                          <p className="text-xs text-muted-foreground">{student.studentId}</p>
+                        </div>
+                      </div>
+                      <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                        {student.status}
+                      </Badge>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -1067,17 +1500,24 @@ export function EducationDashboard() {
                 <CardTitle>Classes Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                {classes.slice(0, 5).map(cls => (
-                  <div key={cls.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{cls.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {cls.teacher ? `${cls.teacher.firstName} ${cls.teacher.lastName}` : "No teacher"}
-                      </p>
-                    </div>
-                    <Badge variant="outline">{cls._count?.students || 0} students</Badge>
+                {classes.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No classes created yet</p>
                   </div>
-                ))}
+                ) : (
+                  classes.slice(0, 5).map(cls => (
+                    <div key={cls.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{cls.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {cls.teacher ? `${cls.teacher.firstName} ${cls.teacher.lastName}` : "No teacher"}
+                        </p>
+                      </div>
+                      <Badge variant="outline">{cls._count?.students || 0} students</Badge>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
@@ -1095,121 +1535,155 @@ export function EducationDashboard() {
                 className="pl-8"
               />
             </div>
-            <Button onClick={() => {
-              resetStudentForm();
-              setEditingStudent(null);
-              setStudentDialog(true);
-            }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Student
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStudentImportDialog(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                const response = await fetch("/api/education/export?type=students-template");
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "student_import_template.csv";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Template
+              </Button>
+              <Button onClick={() => {
+                resetStudentForm();
+                setEditingStudent(null);
+                setStudentDialog(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Student
+              </Button>
+            </div>
           </div>
 
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="text-left p-4 font-medium">Student ID</th>
-                      <th className="text-left p-4 font-medium">Name</th>
-                      <th className="text-left p-4 font-medium">Class</th>
-                      <th className="text-left p-4 font-medium">Guardian</th>
-                      <th className="text-left p-4 font-medium">Phone</th>
-                      <th className="text-left p-4 font-medium">Status</th>
-                      <th className="text-left p-4 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students
-                      .filter(s => 
-                        studentSearch === "" || 
-                        `${s.firstName} ${s.lastName}`.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                        s.studentId.toLowerCase().includes(studentSearch.toLowerCase())
-                      )
-                      .map(student => (
-                        <tr key={student.id} className="border-b last:border-0 hover:bg-muted/50">
-                          <td className="p-4 text-sm">{student.studentId}</td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-medium">{student.firstName} {student.lastName}</p>
+              <ScrollArea className="h-[500px]">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-background">
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left p-4 font-medium">Student ID</th>
+                        <th className="text-left p-4 font-medium">Name</th>
+                        <th className="text-left p-4 font-medium">Class</th>
+                        <th className="text-left p-4 font-medium">Guardian</th>
+                        <th className="text-left p-4 font-medium">Phone</th>
+                        <th className="text-left p-4 font-medium">Status</th>
+                        <th className="text-left p-4 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students
+                        .filter(s => 
+                          studentSearch === "" || 
+                          `${s.firstName} ${s.lastName}`.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          s.studentId.toLowerCase().includes(studentSearch.toLowerCase())
+                        )
+                        .map(student => (
+                          <tr key={student.id} className="border-b last:border-0 hover:bg-muted/50">
+                            <td className="p-4 text-sm">{student.studentId}</td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="text-sm font-medium">{student.firstName} {student.lastName}</p>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="p-4 text-sm">{student.class?.name || "-"}</td>
-                          <td className="p-4 text-sm">{student.guardianName || "-"}</td>
-                          <td className="p-4 text-sm">{student.guardianPhone || "-"}</td>
-                          <td className="p-4">
-                            <Badge variant={student.status === "active" ? "default" : "secondary"}>
-                              {student.status}
-                            </Badge>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex gap-1">
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => {
-                                  setEditingStudent(student);
-                                  setStudentForm({
-                                    studentId: student.studentId,
-                                    firstName: student.firstName,
-                                    lastName: student.lastName,
-                                    dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : "",
-                                    gender: student.gender || "",
-                                    email: student.email || "",
-                                    phone: student.phone || "",
-                                    address: student.address || "",
-                                    guardianName: student.guardianName || "",
-                                    guardianPhone: student.guardianPhone || "",
-                                    guardianEmail: student.guardianEmail || "",
-                                    guardianAddress: student.guardianAddress || "",
-                                    guardianRelation: student.guardianRelation || "",
-                                    guardian2Name: student.guardian2Name || "",
-                                    guardian2Phone: student.guardian2Phone || "",
-                                    guardian2Email: student.guardian2Email || "",
-                                    guardian2Address: student.guardian2Address || "",
-                                    guardian2Relation: student.guardian2Relation || "",
-                                    classId: student.classId || "",
-                                    sessionId: student.sessionId || "",
-                                    enrollmentDate: student.enrollmentDate ? student.enrollmentDate.split('T')[0] : "",
-                                    sessionStartDate: student.sessionStartDate ? student.sessionStartDate.split('T')[0] : "",
-                                    status: student.status,
-                                  });
-                                  setStudentDialog(true);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => handleSendMessage(student)}
-                                disabled={!student.guardianPhone}
-                              >
-                                <MessageSquare className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => {
-                                  setDeleteTarget({ type: "student", id: student.id });
-                                  setDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="p-4 text-sm">{student.class?.name || "-"}</td>
+                            <td className="p-4 text-sm">{student.guardianName || "-"}</td>
+                            <td className="p-4 text-sm">{student.guardianPhone || "-"}</td>
+                            <td className="p-4">
+                              <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                                {student.status}
+                              </Badge>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingStudent(student);
+                                    setStudentForm({
+                                      studentId: student.studentId,
+                                      firstName: student.firstName,
+                                      lastName: student.lastName,
+                                      dateOfBirth: student.dateOfBirth ? student.dateOfBirth.split('T')[0] : "",
+                                      gender: student.gender || "",
+                                      email: student.email || "",
+                                      phone: student.phone || "",
+                                      address: student.address || "",
+                                      guardianName: student.guardianName || "",
+                                      guardianPhone: student.guardianPhone || "",
+                                      guardianEmail: student.guardianEmail || "",
+                                      guardianAddress: student.guardianAddress || "",
+                                      guardianRelation: student.guardianRelation || "",
+                                      guardian2Name: student.guardian2Name || "",
+                                      guardian2Phone: student.guardian2Phone || "",
+                                      guardian2Email: student.guardian2Email || "",
+                                      guardian2Address: student.guardian2Address || "",
+                                      guardian2Relation: student.guardian2Relation || "",
+                                      classId: student.classId || "",
+                                      sessionId: student.sessionId || "",
+                                      enrollmentDate: student.enrollmentDate ? student.enrollmentDate.split('T')[0] : "",
+                                      sessionStartDate: student.sessionStartDate ? student.sessionStartDate.split('T')[0] : "",
+                                      status: student.status,
+                                    });
+                                    setStudentDialog(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => handleSendMessage(student)}
+                                  disabled={!student.guardianPhone}
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => {
+                                    setSelectedStudentForGrades(student);
+                                    fetchStudentGrades(student.id);
+                                    setGradeDialog(true);
+                                  }}
+                                >
+                                  <Award className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => {
+                                    setDeleteTarget({ type: "student", id: student.id });
+                                    setDeleteDialog(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1226,21 +1700,42 @@ export function EducationDashboard() {
                 className="pl-8"
               />
             </div>
-            <Button onClick={() => {
-              resetTeacherForm();
-              setEditingTeacher(null);
-              setTeacherDialog(true);
-            }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Teacher
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setTeacherImportDialog(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                const response = await fetch("/api/education/export?type=teachers-template");
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "teacher_import_template.csv";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Template
+              </Button>
+              <Button onClick={() => {
+                resetTeacherForm();
+                setEditingTeacher(null);
+                setTeacherDialog(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Teacher
+              </Button>
+            </div>
           </div>
 
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <ScrollArea className="h-[500px]">
                 <table className="w-full">
-                  <thead>
+                  <thead className="sticky top-0 bg-background">
                     <tr className="border-b bg-muted/50">
                       <th className="text-left p-4 font-medium">Employee ID</th>
                       <th className="text-left p-4 font-medium">Name</th>
@@ -1326,7 +1821,7 @@ export function EducationDashboard() {
                       ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1344,69 +1839,82 @@ export function EducationDashboard() {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {classes.map(cls => (
-              <Card key={cls.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{cls.name}</CardTitle>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          setEditingClass(cls);
-                          setClassForm({
-                            name: cls.name,
-                            grade: cls.grade || "",
-                            section: cls.section || "",
-                            teacherId: cls.teacherId || "",
-                            sessionId: cls.sessionId || "",
-                            capacity: cls.capacity,
-                            roomNumber: cls.roomNumber || "",
-                          });
-                          setClassDialog(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          setDeleteTarget({ type: "class", id: cls.id });
-                          setDeleteDialog(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardDescription>
-                    {cls.grade && `Grade: ${cls.grade}`} {cls.section && `Section: ${cls.section}`}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Teacher:</span>
-                      <span>{cls.teacher ? `${cls.teacher.firstName} ${cls.teacher.lastName}` : "Not assigned"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Students:</span>
-                      <span>{cls._count?.students || 0} / {cls.capacity}</span>
-                    </div>
-                    {cls.roomNumber && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Room:</span>
-                        <span>{cls.roomNumber}</span>
+          {classes.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No classes created yet</p>
+                <Button className="mt-4" onClick={() => setClassDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Class
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {classes.map(cls => (
+                <Card key={cls.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{cls.name}</CardTitle>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            setEditingClass(cls);
+                            setClassForm({
+                              name: cls.name,
+                              grade: cls.grade || "",
+                              section: cls.section || "",
+                              teacherId: cls.teacherId || "",
+                              sessionId: cls.sessionId || "",
+                              capacity: cls.capacity,
+                              roomNumber: cls.roomNumber || "",
+                            });
+                            setClassDialog(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            setDeleteTarget({ type: "class", id: cls.id });
+                            setDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </div>
+                    <CardDescription>
+                      {cls.grade && `Grade: ${cls.grade}`} {cls.section && `Section: ${cls.section}`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Teacher:</span>
+                        <span>{cls.teacher ? `${cls.teacher.firstName} ${cls.teacher.lastName}` : "Not assigned"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Students:</span>
+                        <span>{cls._count?.students || 0} / {cls.capacity}</span>
+                      </div>
+                      {cls.roomNumber && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Room:</span>
+                          <span>{cls.roomNumber}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Sessions Tab */}
@@ -1422,71 +1930,83 @@ export function EducationDashboard() {
             </Button>
           </div>
 
-          <div className="grid gap-4">
-            {sessions.map(sess => (
-              <Card key={sess.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {sess.name}
-                        {sess.isCurrent && <Badge>Current</Badge>}
-                      </CardTitle>
-                      <CardDescription>
-                        {format(new Date(sess.startDate), "MMM dd, yyyy")} - {format(new Date(sess.endDate), "MMM dd, yyyy")}
-                      </CardDescription>
+          {sessions.length === 0? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No sessions created yet</p>
+                <Button className="mt-4" onClick={() => setSessionDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Session
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {sessions.map(sess => (
+                <Card key={sess.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {sess.name}
+                          {sess.isCurrent && <Badge>Current</Badge>}
+                        </CardTitle>
+                        <CardDescription>
+                          {format(new Date(sess.startDate), "MMM dd, yyyy")} - {format(new Date(sess.endDate), "MMM dd, yyyy")}
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            setEditingSession(sess);
+                            setSessionForm({
+                              name: sess.name,
+                              startDate: sess.startDate.split('T')[0],
+                              endDate: sess.endDate.split('T')[0],
+                              description: sess.description || "",
+                              isCurrent: sess.isCurrent,
+                            });
+                            setSessionDialog(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            setDeleteTarget({ type: "session", id: sess.id });
+                            setDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          setEditingSession(sess);
-                          setSessionForm({
-                            name: sess.name,
-                            startDate: sess.startDate.split('T')[0],
-                            endDate: sess.endDate.split('T')[0],
-                            description: sess.description || "",
-                            isCurrent: sess.isCurrent,
-                          });
-                          setSessionDialog(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          setDeleteTarget({ type: "session", id: sess.id });
-                          setDeleteDialog(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Classes: </span>
+                        <span className="font-medium">{sess._count?.classes || 0}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Students: </span>
+                        <span className="font-medium">{sess._count?.students || 0}</span>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Classes: </span>
-                      <span className="font-medium">{sess._count?.classes || 0}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Students: </span>
-                      <span className="font-medium">{sess._count?.students || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Attendance Tab */}
         <TabsContent value="attendance" className="space-y-4">
-          {/* Attendance Controls */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -1494,23 +2014,21 @@ export function EducationDashboard() {
                 Attendance Management
               </CardTitle>
               <CardDescription>
-                Select a class and date to mark or view attendance
+                Track student attendance and automate parent notifications via WhatsApp Web
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <CardContent className="space-y-4">
+              {/* Selection Controls */}
+              <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-2">
                   <Label>Select Class</Label>
-                  <Select value={attendanceClassId || "select-class"} onValueChange={(v) => setAttendanceClassId(v === "select-class" ? "" : v)}>
-                    <SelectTrigger>
+                  <Select value={attendanceClassId} onValueChange={setAttendanceClassId}>
+                    <SelectTrigger className="w-48">
                       <SelectValue placeholder="Choose a class" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="select-class">Choose a class...</SelectItem>
-                      {classes.filter(cls => cls.id).map(cls => (
-                        <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name} {cls.grade ? `(${cls.grade})` : ''}
-                        </SelectItem>
+                      {classes.map(cls => (
+                        <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1521,513 +2039,145 @@ export function EducationDashboard() {
                     type="date"
                     value={attendanceDate}
                     onChange={(e) => setAttendanceDate(e.target.value)}
+                    className="w-40"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Session (Optional)</Label>
-                  <Select value={attendanceSessionId || "all"} onValueChange={(v) => setAttendanceSessionId(v === "all" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All sessions" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Sessions</SelectItem>
-                      {sessions.filter(sess => sess.id).map(sess => (
-                        <SelectItem key={sess.id} value={sess.id}>
-                          {sess.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end gap-2">
-                  <Button onClick={loadAttendance} className="flex-1">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Load
-                  </Button>
-                </div>
+                <Button 
+                  onClick={handleSaveAttendance}
+                  disabled={!attendanceClassId || savingAttendance}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {savingAttendance ? "Saving..." : "Save Attendance"}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Attendance Stats */}
-          {attendanceStats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold">{attendanceStats.total}</div>
-                  <div className="text-xs text-muted-foreground">Total Students</div>
-                </CardContent>
-              </Card>
-              <Card className="border-green-200 dark:border-green-900">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">{attendanceStats.present}</div>
-                  <div className="text-xs text-muted-foreground">Present</div>
-                </CardContent>
-              </Card>
-              <Card className="border-red-200 dark:border-red-900">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-red-600">{attendanceStats.absent}</div>
-                  <div className="text-xs text-muted-foreground">Absent</div>
-                </CardContent>
-              </Card>
-              <Card className="border-yellow-200 dark:border-yellow-900">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{attendanceStats.late}</div>
-                  <div className="text-xs text-muted-foreground">Late</div>
-                </CardContent>
-              </Card>
-              <Card className="border-blue-200 dark:border-blue-900">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{attendanceStats.excused}</div>
-                  <div className="text-xs text-muted-foreground">Excused</div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Attendance Marking */}
-          {attendanceClassId && attendanceDate && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Mark Attendance</CardTitle>
-                    <CardDescription>
-                      {classes.find(c => c.id === attendanceClassId)?.name} - {attendanceDate}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => markAllStudents('present')}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
-                      All Present
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={saveAttendance}
-                      disabled={savingAttendance}
-                    >
-                      {savingAttendance ? (
-                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-1" />
-                      )}
-                      Save Attendance
-                    </Button>
-                  </div>
+              {/* Statistics */}
+              {Object.keys(attendanceRecords_local).length > 0 && (
+                <div className="grid grid-cols-5 gap-2 p-4 bg-muted/50 rounded-lg">
+                  {(() => {
+                    const stats = calculateLocalStats();
+                    return (
+                      <>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold">{stats.total}</p>
+                          <p className="text-xs text-muted-foreground">Total</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-green-600">{stats.present}</p>
+                          <p className="text-xs text-muted-foreground">Present</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
+                          <p className="text-xs text-muted-foreground">Absent</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-yellow-600">{stats.late}</p>
+                          <p className="text-xs text-muted-foreground">Late</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-blue-600">{stats.excused}</p>
+                          <p className="text-xs text-muted-foreground">Excused</p>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {attendanceStudents.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No students in this class</p>
-                    <p className="text-sm mt-2">Add students to the class first</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
+              )}
+
+              {/* Student List for Attendance */}
+              {attendanceClassId && classStudents.length > 0 ? (
+                <div className="border rounded-lg overflow-hidden">
+                  <ScrollArea className="max-h-96">
                     <table className="w-full">
-                      <thead>
+                      <thead className="sticky top-0 bg-background">
                         <tr className="border-b bg-muted/50">
-                          <th className="text-left p-3 font-medium">Student ID</th>
-                          <th className="text-left p-3 font-medium">Name</th>
-                          <th className="text-left p-3 font-medium">Guardian</th>
-                          <th className="text-left p-3 font-medium">Phone</th>
-                          <th className="text-center p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Student</th>
+                          <th className="text-left p-3 font-medium">ID</th>
+                          <th className="text-center p-3 font-medium">Present</th>
+                          <th className="text-center p-3 font-medium">Absent</th>
+                          <th className="text-center p-3 font-medium">Late</th>
+                          <th className="text-center p-3 font-medium">Excused</th>
                           <th className="text-left p-3 font-medium">Remarks</th>
-                          <th className="text-center p-3 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {attendanceStudents.map((student) => {
-                          const record = attendanceRecords[student.id];
-                          return (
-                            <tr key={student.id} className="border-b last:border-0 hover:bg-muted/50">
-                              <td className="p-3 text-sm">{student.studentId}</td>
-                              <td className="p-3">
-                                <div className="flex items-center gap-2">
-                                  <Avatar className="h-8 w-8">
-                                    <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <p className="text-sm font-medium">{student.firstName} {student.lastName}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="p-3 text-sm">{student.guardianName || '-'}</td>
-                              <td className="p-3 text-sm">{student.guardianPhone || '-'}</td>
-                              <td className="p-3">
-                                <div className="flex justify-center gap-1">
-                                  <Button
-                                    variant={record?.status === 'present' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={record?.status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}
-                                    onClick={() => updateStudentAttendance(student.id, 'present')}
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant={record?.status === 'absent' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={record?.status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}
-                                    onClick={() => updateStudentAttendance(student.id, 'absent')}
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant={record?.status === 'late' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={record?.status === 'late' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-                                    onClick={() => updateStudentAttendance(student.id, 'late')}
-                                  >
-                                    <Clock className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant={record?.status === 'excused' ? 'default' : 'outline'}
-                                    size="sm"
-                                    className={record?.status === 'excused' ? 'bg-blue-600 hover:bg-blue-700' : ''}
-                                    onClick={() => updateStudentAttendance(student.id, 'excused')}
-                                  >
-                                    <AlertCircle className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                              <td className="p-3">
-                                <Input
-                                  placeholder="Add remarks..."
-                                  className="h-8 text-sm"
-                                  value={record?.remarks || ''}
-                                  onChange={(e) => updateStudentRemarks(student.id, e.target.value)}
-                                />
-                              </td>
-                              <td className="p-3 text-center">
-                                {student.guardianPhone && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                      const message = `Dear Parent/Guardian, your child ${student.firstName} ${student.lastName} was marked as ${record?.status || 'not marked'} on ${attendanceDate}. - ${schoolSettings?.schoolName || 'School'}`;
-                                      window.open(`https://wa.me/${student.guardianPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
-                                    }}
-                                  >
-                                    <MessageSquare className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {classStudents.map(student => (
+                          <tr key={student.id} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{student.firstName} {student.lastName}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm text-muted-foreground">{student.studentId}</td>
+                            <td className="p-3 text-center">
+                              <input
+                                type="radio"
+                                name={`attendance-${student.id}`}
+                                checked={attendanceRecords_local[student.id]?.status === "present"}
+                                onChange={() => handleAttendanceStatusChange(student.id, "present")}
+                                className="h-4 w-4 accent-green-600"
+                              />
+                            </td>
+                            <td className="p-3 text-center">
+                              <input
+                                type="radio"
+                                name={`attendance-${student.id}`}
+                                checked={attendanceRecords_local[student.id]?.status === "absent"}
+                                onChange={() => handleAttendanceStatusChange(student.id, "absent")}
+                                className="h-4 w-4 accent-red-600"
+                              />
+                            </td>
+                            <td className="p-3 text-center">
+                              <input
+                                type="radio"
+                                name={`attendance-${student.id}`}
+                                checked={attendanceRecords_local[student.id]?.status === "late"}
+                                onChange={() => handleAttendanceStatusChange(student.id, "late")}
+                                className="h-4 w-4 accent-yellow-600"
+                              />
+                            </td>
+                            <td className="p-3 text-center">
+                              <input
+                                type="radio"
+                                name={`attendance-${student.id}`}
+                                checked={attendanceRecords_local[student.id]?.status === "excused"}
+                                onChange={() => handleAttendanceStatusChange(student.id, "excused")}
+                                className="h-4 w-4 accent-blue-600"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                placeholder="Optional remarks..."
+                                value={attendanceRecords_local[student.id]?.remarks || ""}
+                                onChange={(e) => setAttendanceRecordsLocal(prev => ({
+                                  ...prev,
+                                  [student.id]: { ...prev[student.id], remarks: e.target.value }
+                                }))}
+                                className="w-40 h-8"
+                              />
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Recent Attendance History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recent Attendance Records
-              </CardTitle>
-              <CardDescription>
-                View recently marked attendance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {attendanceHistory.length === 0 ? (
+                  </ScrollArea>
+                </div>
+              ) : attendanceClassId ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No attendance records yet</p>
-                  <p className="text-sm mt-2">Select a class and date to mark attendance</p>
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No students in this class</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left p-3 font-medium">Date</th>
-                        <th className="text-left p-3 font-medium">Student</th>
-                        <th className="text-left p-3 font-medium">Class</th>
-                        <th className="text-center p-3 font-medium">Status</th>
-                        <th className="text-left p-3 font-medium">Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {attendanceHistory.slice(0, 10).map((record) => (
-                        <tr key={record.id} className="border-b last:border-0 hover:bg-muted/50">
-                          <td className="p-3 text-sm">
-                            {format(new Date(record.date), 'MMM dd, yyyy')}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-7 w-7">
-                                <AvatarFallback>
-                                  {record.student?.firstName?.[0]}{record.student?.lastName?.[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {record.student?.firstName} {record.student?.lastName}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {record.student?.studentId}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-3 text-sm">
-                            {record.student?.class?.name || '-'}
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge 
-                              variant={
-                                record.status === 'present' ? 'default' :
-                                record.status === 'absent' ? 'destructive' :
-                                record.status === 'late' ? 'secondary' : 'outline'
-                              }
-                              className={
-                                record.status === 'present' ? 'bg-green-600' :
-                                record.status === 'late' ? 'bg-yellow-600' :
-                                record.status === 'excused' ? 'bg-blue-600' : ''
-                              }
-                            >
-                              {record.status}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-sm text-muted-foreground">
-                            {record.remarks || '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Select a class and date to mark attendance</p>
+                  <p className="text-sm mt-2">WhatsApp notifications will be automatically triggered for absent students</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Grades Tab */}
-        <TabsContent value="grades" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Grade Management
-              </CardTitle>
-              <CardDescription>
-                Enter and manage student grades with the INFOHAS grading system
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Student Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Select Student</Label>
-                    <Select onValueChange={(v) => {
-                      const student = students.find(s => s.id === v);
-                      setSelectedStudent(student || null);
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a student" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.filter(s => s.id).map(s => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.firstName} {s.lastName} ({s.studentId})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Academic Year</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2024-2025">2024-2025</SelectItem>
-                        <SelectItem value="2023-2024">2023-2024</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Year Level</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1st Year</SelectItem>
-                        <SelectItem value="2">2nd Year</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {selectedStudent && (
-                  <>
-                    {/* Student Info Card */}
-                    <Card className="bg-muted/50">
-                      <CardContent className="p-4">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Name:</span>
-                            <p className="font-medium">{selectedStudent.firstName} {selectedStudent.lastName}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Student ID:</span>
-                            <p className="font-medium">{selectedStudent.studentId}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Class:</span>
-                            <p className="font-medium">{selectedStudent.class?.name || "Not assigned"}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Session:</span>
-                            <p className="font-medium">{selectedStudent.session?.name || "Not assigned"}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Grade Entry Table */}
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[800px]">
-                          <thead>
-                            <tr className="bg-slate-800 text-white">
-                              <th className="p-3 text-left text-sm font-medium w-[8%]">UF</th>
-                              <th className="p-3 text-left text-sm font-medium w-[8%]">Code</th>
-                              <th className="p-3 text-left text-sm font-medium w-[25%]">Module Title</th>
-                              <th className="p-3 text-center text-sm font-medium w-[10%]">CC</th>
-                              <th className="p-3 text-center text-sm font-medium w-[10%]">EFCF T</th>
-                              <th className="p-3 text-center text-sm font-medium w-[10%]">EFCF P</th>
-                              <th className="p-3 text-left text-sm font-medium w-[20%]">Comment</th>
-                              <th className="p-3 text-center text-sm font-medium w-[9%]">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-b hover:bg-muted/50">
-                              <td className="p-3">
-                                <Input className="h-8 w-full" placeholder="UF1" defaultValue="UF1" />
-                              </td>
-                              <td className="p-3">
-                                <Input className="h-8 w-full" placeholder="C2.2" defaultValue="C2.2" />
-                              </td>
-                              <td className="p-3">
-                                <Input className="h-8 w-full" placeholder="Module name" />
-                              </td>
-                              <td className="p-3">
-                                <Input type="number" step="0.01" className="h-8 w-full text-center" placeholder="0.00" min="0" max="20" />
-                              </td>
-                              <td className="p-3">
-                                <Input type="number" step="0.01" className="h-8 w-full text-center" placeholder="0.00" min="0" max="20" />
-                              </td>
-                              <td className="p-3">
-                                <Input type="number" step="0.01" className="h-8 w-full text-center" placeholder="0.00" min="0" max="20" />
-                              </td>
-                              <td className="p-3">
-                                <Input className="h-8 w-full" placeholder="Comment" />
-                              </td>
-                              <td className="p-3 text-center">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    {/* Results Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">Year Results</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <table className="w-full text-sm">
-                            <tbody>
-                              <tr className="border-b">
-                                <td className="py-2 text-muted-foreground">MCC (Average of Continuous Controls)</td>
-                                <td className="py-2 text-right font-medium">-</td>
-                              </tr>
-                              <tr className="border-b">
-                                <td className="py-2 text-muted-foreground">MEFCFT (Average of Theoretical Exams)</td>
-                                <td className="py-2 text-right font-medium">-</td>
-                              </tr>
-                              <tr className="border-b">
-                                <td className="py-2 text-muted-foreground">MEFCFP (Average of Practical Exams)</td>
-                                <td className="py-2 text-right font-medium">-</td>
-                              </tr>
-                              <tr className="bg-green-50 dark:bg-green-900/20">
-                                <td className="py-2 font-medium">Final Average</td>
-                                <td className="py-2 text-right font-bold text-green-600">-/20</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">Grade Formula</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2 text-sm">
-                            <p className="text-muted-foreground">
-                              <strong>Final Grade = </strong>
-                              (CC × 3 + EFCF T × 2 + EFCF P × 3) / 8
-                            </p>
-                            <div className="mt-4 p-3 bg-muted rounded-lg">
-                              <p className="text-xs text-muted-foreground">Weight Distribution:</p>
-                              <ul className="text-xs mt-1 space-y-1">
-                                <li>• Continuous Control (CC): 37.5%</li>
-                                <li>• Theoretical Exams (EFCF T): 25%</li>
-                                <li>• Practical Exams (EFCF P): 37.5%</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Calculate Grades
-                      </Button>
-                      <Button variant="outline">
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Save Grades
-                      </Button>
-                      <Button variant="secondary">
-                        Export Transcript
-                      </Button>
-                    </div>
-                  </>
-                )}
-
-                {!selectedStudent && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Select a student to enter grades</p>
-                    <p className="text-sm mt-2">The INFOHAS grading system supports CC, EFCF T, and EFCF P scores</p>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -2044,23 +2194,91 @@ export function EducationDashboard() {
                 Create and manage message templates for automated notifications
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <p className="text-sm text-muted-foreground">
-                    Templates support variables like {`{{student_name}}`}, {`{{date}}`}, {`{{class_name}}`}
-                  </p>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Template
-                  </Button>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">
+                  Templates support variables: {`{{student_name}}`}, {`{{date}}`}, {`{{class_name}}`}, {`{{status}}`}, {`{{school_name}}`}
+                </p>
+                <Button onClick={() => {
+                  resetTemplateForm();
+                  setEditingTemplate(null);
+                  setTemplateDialog(true);
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Template
+                </Button>
+              </div>
+
+              {templates.length > 0 ? (
+                <div className="grid gap-4">
+                  {templates.map(template => (
+                    <Card key={template.id} className={cn("relative", template.isDefault && "border-green-500")}>
+                      {template.isDefault && (
+                        <div className="absolute top-2 right-2">
+                          <Badge className="bg-green-600">Default</Badge>
+                        </div>
+                      )}
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-base">{template.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline">{template.category}</Badge>
+                              <span className="text-xs">Used {template.usageCount} times</span>
+                            </CardDescription>
+                          </div>
+                          <div className="flex gap-1">
+                            {!template.isDefault && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSetDefaultTemplate(template.id)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Set Default
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditingTemplate(template);
+                                setTemplateForm({
+                                  name: template.name,
+                                  category: template.category,
+                                  subject: template.subject || "",
+                                  body: template.body,
+                                  isDefault: template.isDefault,
+                                  usePredefined: false,
+                                });
+                                setTemplateDialog(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">{template.body}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
+              ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No templates created yet</p>
                   <p className="text-sm mt-2">Create templates for absence, delay, and reminder messages</p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -2077,103 +2295,448 @@ export function EducationDashboard() {
                 View all sent messages and their delivery status
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No communication logs yet</p>
-                <p className="text-sm mt-2">Logs will appear here when messages are sent</p>
+            <CardContent className="space-y-4">
+              {/* Filters */}
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={logFilters.startDate}
+                    onChange={(e) => setLogFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="w-40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={logFilters.endDate}
+                    onChange={(e) => setLogFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="w-40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={logFilters.status} onValueChange={(value) => setLogFilters(prev => ({ ...prev, status: value }))}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button variant="outline" onClick={exportLogs} disabled={communicationLogs.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
               </div>
+
+              {/* Logs Table */}
+              {communicationLogs.length > 0 ? (
+                <ScrollArea className="h-[400px]">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-background">
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left p-3 font-medium">Date</th>
+                        <th className="text-left p-3 font-medium">Student</th>
+                        <th className="text-left p-3 font-medium">Phone</th>
+                        <th className="text-left p-3 font-medium">Message</th>
+                        <th className="text-left p-3 font-medium">Status</th>
+                        <th className="text-left p-3 font-medium">Channel</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {communicationLogs.map(log => (
+                        <tr key={log.id} className="border-b last:border-0 hover:bg-muted/50">
+                          <td className="p-3 text-sm">
+                            {format(new Date(log.createdAt), "MMM dd, yyyy HH:mm")}
+                          </td>
+                          <td className="p-3 text-sm">
+                            {log.student ? `${log.student.firstName} ${log.student.lastName}` : log.recipientName || "-"}
+                          </td>
+                          <td className="p-3 text-sm">{log.recipientPhone}</td>
+                          <td className="p-3">
+                            <p className="text-sm truncate max-w-xs" title={log.messageContent}>
+                              {log.messageContent.substring(0, 50)}...
+                            </p>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={
+                              log.status === "sent" ? "default" :
+                              log.status === "delivered" ? "success" :
+                              log.status === "failed" ? "destructive" : "secondary"
+                            }>
+                              {log.status}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant="outline">{log.channel}</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Send className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No communication logs yet</p>
+                  <p className="text-sm mt-2">Messages sent via WhatsApp will be logged here</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-4">
+        {/* Grades Tab */}
+        <TabsContent value="grades" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                WhatsApp Web Integration
+                <Award className="h-5 w-5" />
+                Student Grades - 18-Month Program
               </CardTitle>
               <CardDescription>
-                Send messages to guardians via WhatsApp Web - No API required!
+                Manage student grades with CC (Continuous Control), EFCF_T (Theoretical), EFCF_P (Practical) grade types
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                  <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">✅ How It Works</h3>
-                  <ul className="text-sm text-green-700 dark:text-green-300 space-y-2">
-                    <li>• Click the message icon (💬) next to any student</li>
-                    <li>• Choose a template or write a custom message</li>
-                    <li>• Click "Send via WhatsApp" to open WhatsApp Web</li>
-                    <li>• Review and send the message from WhatsApp</li>
-                  </ul>
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📱 Available Message Templates</h3>
-                  <div className="space-y-2">
-                    {messageTemplates.map((tmpl) => (
-                      <div key={tmpl.id} className="text-sm">
-                        <span className="font-medium text-blue-700 dark:text-blue-300">{tmpl.name}:</span>
-                        <p className="text-blue-600 dark:text-blue-400 ml-2">{tmpl.template}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <h3 className="font-semibold text-amber-800 dark:text-amber-200 mb-2">⚡ Variables You Can Use</h3>
-                  <div className="text-sm text-amber-700 dark:text-amber-300 space-y-1">
-                    <p><code className="bg-amber-100 dark:bg-amber-800 px-1 rounded">{"{{student_name}}"}</code> - Student's full name</p>
-                    <p><code className="bg-amber-100 dark:bg-amber-800 px-1 rounded">{"{{school_name}}"}</code> - Your school name</p>
-                  </div>
-                </div>
-
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground">
-                    No API keys or tokens needed - works directly with WhatsApp Web!
-                  </p>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>Select Student</Label>
+                  <Select 
+                    value={selectedStudentForGrades?.id || ""} 
+                    onValueChange={(value) => {
+                      const student = students.find(s => s.id === value);
+                      if (student) {
+                        setSelectedStudentForGrades(student);
+                        fetchStudentGrades(student.id);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Choose a student" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {students.map(student => (
+                        <SelectItem key={student.id} value={student.id}>
+                          {student.firstName} {student.lastName} ({student.studentId})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+
+              {selectedStudentForGrades && (
+                <>
+                  {/* Grade Summary */}
+                  {studentGrades.length > 0 && (
+                    <Card className="bg-muted/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Grade Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          const gradeSummary = calculateFinalGrade(studentGrades);
+                          return (
+                            <div className="space-y-4">
+                              {/* Period 1 */}
+                              <div>
+                                <h4 className="font-medium mb-2">Period 1 (Months 1-9)</h4>
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">CC Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period1.CC?.toFixed(2) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">EFCF_T Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period1.EFCF_T?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">EFCF_P Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period1.EFCF_P?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Period 2 */}
+                              <div>
+                                <h4 className="font-medium mb-2">Period 2 (Months 10-18)</h4>
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">CC Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period2.CC?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">EFCF_T Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period2.EFCF_T?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">EFCF_P Average</p>
+                                    <p className="text-xl font-bold">{gradeSummary.period2.EFCF_P?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <Separator />
+
+                              {/* Final Grade */}
+                              <div>
+                                <h4 className="font-medium mb-2">Final Grade Calculation</h4>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Formula: (CC × 3 + EFCF_T × 2 + EFCF_P × 3 + Presentation × 2) / 10
+                                </p>
+                                <div className="grid grid-cols-4 gap-4">
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Combined CC</p>
+                                    <p className="text-xl font-bold">{gradeSummary.combined.CC?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Combined EFCF_T</p>
+                                    <p className="text-xl font-bold">{gradeSummary.combined.EFCF_T?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Combined EFCF_P</p>
+                                    <p className="text-xl font-bold">{gradeSummary.combined.EFCF_P?.toFixed(1) ?? "-"}</p>
+                                  </div>
+                                  <div className="text-center p-3 bg-background rounded-lg">
+                                    <p className="text-sm text-muted-foreground">Presentation</p>
+                                    <Input
+                                      type="number"
+                                      value={presentationScore}
+                                      onChange={(e) => setPresentationScore(e.target.value)}
+                                      placeholder="0"
+                                      className="w-20 h-8 mx-auto"
+                                      min="0"
+                                      max="20"
+                                    />
+                                  </div>
+                                </div>
+                                
+                                {gradeSummary.final !== null && (
+                                  <div className="text-center p-4 bg-green-100 rounded-lg mt-4">
+                                    <p className="text-sm text-muted-foreground">Final Grade</p>
+                                    <p className="text-3xl font-bold text-green-700">{gradeSummary.final.toFixed(2)}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Add Grade Form */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Add New Grade</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                        <div className="space-y-2">
+                          <Label>Subject</Label>
+                          <Input
+                            value={gradeForm.subject}
+                            onChange={(e) => setGradeForm(prev => ({ ...prev, subject: e.target.value }))}
+                            placeholder="e.g., Mathematics"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Grade Type</Label>
+                          <Select value={gradeForm.gradeType} onValueChange={(value) => setGradeForm(prev => ({ ...prev, gradeType: value }))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="CC">CC (Continuous Control)</SelectItem>
+                              <SelectItem value="EFCF_T">EFCF_T (Theoretical)</SelectItem>
+                              <SelectItem value="EFCF_P">EFCF_P (Practical)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Period</Label>
+                          <Select value={gradeForm.period} onValueChange={(value) => setGradeForm(prev => ({ ...prev, period: value }))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">Period 1 (Months 1-9)</SelectItem>
+                              <SelectItem value="2">Period 2 (Months 10-18)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Score</Label>
+                          <Input
+                            type="number"
+                            value={gradeForm.score}
+                            onChange={(e) => setGradeForm(prev => ({ ...prev, score: e.target.value }))}
+                            placeholder="e.g., 15"
+                            min="0"
+                            max="20"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Max Score</Label>
+                          <Input
+                            type="number"
+                            value={gradeForm.maxScore}
+                            onChange={(e) => setGradeForm(prev => ({ ...prev, maxScore: e.target.value }))}
+                            placeholder="20"
+                            min="1"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button onClick={handleAddGrade} disabled={!gradeForm.subject || !gradeForm.score}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Grade
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Grades List */}
+                  {studentGrades.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Grade Records</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="max-h-96">
+                          <table className="w-full">
+                            <thead className="sticky top-0 bg-background">
+                              <tr className="border-b bg-muted/50">
+                                <th className="text-left p-3 font-medium">Subject</th>
+                                <th className="text-left p-3 font-medium">Type</th>
+                                <th className="text-left p-3 font-medium">Period</th>
+                                <th className="text-left p-3 font-medium">Score</th>
+                                <th className="text-left p-3 font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {studentGrades.map(grade => (
+                                <tr key={grade.id} className="border-b last:border-0 hover:bg-muted/50">
+                                  <td className="p-3 text-sm">{grade.subject}</td>
+                                  <td className="p-3">
+                                    <Badge variant="outline">{grade.gradeType}</Badge>
+                                  </td>
+                                  <td className="p-3 text-sm">Period {grade.period}</td>
+                                  <td className="p-3 text-sm font-medium">
+                                    {grade.score}/{grade.maxScore || 20}
+                                  </td>
+                                  <td className="p-3">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDeleteGrade(grade.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
+
+              {!selectedStudentForGrades && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Select a student to manage their grades</p>
+                  <p className="text-sm mt-2">The 18-month program consists of two 9-month periods</p>
+                </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
 
-          {/* Message Templates Configuration */}
+        {/* Scheduler Tab */}
+        <TabsContent value="scheduler" className="space-y-4">
+          <ClassScheduler 
+            classes={classes}
+            teachers={teachers}
+            modules={modules}
+            schoolSettings={schoolSettings}
+            organizationId={session?.user?.organizationId || ""}
+          />
+        </TabsContent>
+
+        {/* Modules Tab */}
+        <TabsContent value="modules" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Education Modules / Subjects</h3>
+            <Button onClick={() => {
+              setModuleForm({ name: "", code: "", description: "", color: "#3B82F6", creditHours: 1 });
+              setModuleDialog(true);
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Module
+            </Button>
+          </div>
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Customize Message Templates
-              </CardTitle>
-              <CardDescription>
-                Edit the default message templates for your school
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {messageTemplates.map((tmpl, index) => (
-                  <div key={tmpl.id} className="space-y-2 p-3 border rounded-lg">
-                    <Label className="font-medium">{tmpl.name}</Label>
-                    <Textarea
-                      value={tmpl.template}
-                      onChange={(e) => {
-                        const newTemplates = [...messageTemplates];
-                        newTemplates[index] = { ...tmpl, template: e.target.value };
-                        setMessageTemplates(newTemplates);
-                      }}
-                      rows={2}
-                      className="text-sm"
-                    />
-                  </div>
-                ))}
-                <Button className="w-full" onClick={() => {
-                  toast({ title: "Success", description: "Message templates updated for this session" });
-                }}>
-                  Save Template Changes
-                </Button>
-              </div>
+            <CardContent className="p-0">
+              {modules.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No modules created yet</p>
+                  <p className="text-sm">Modules are used for class scheduling</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {modules.map((module: any) => (
+                    <div key={module.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-4 h-4 rounded" 
+                          style={{ backgroundColor: module.color || "#3B82F6" }}
+                        />
+                        <div>
+                          <p className="font-medium">{module.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {module.code && `Code: ${module.code}`}
+                            {module.creditHours && ` • ${module.creditHours} credit hours`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={module.isActive !== false ? "default" : "secondary"}>
+                          {module.isActive !== false ? "Active" : "Inactive"}
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={async () => {
+                            if (confirm("Delete this module?")) {
+                              const res = await fetch(`/api/education/modules?id=${module.id}`, { method: "DELETE" });
+                              if (res.ok) {
+                                toast({ title: "Success", description: "Module deleted" });
+                                fetchData();
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -2191,291 +2754,126 @@ export function EducationDashboard() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID</Label>
-                <Input
-                  id="studentId"
-                  value={studentForm.studentId}
-                  onChange={(e) => setStudentForm({ ...studentForm, studentId: e.target.value })}
-                  placeholder="Auto-generated if empty"
-                />
+                <Label>Student ID *</Label>
+                <Input value={studentForm.studentId} onChange={(e) => setStudentForm(prev => ({ ...prev, studentId: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={studentForm.status} onValueChange={(v) => setStudentForm({ ...studentForm, status: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Status</Label>
+                <Select value={studentForm.status} onValueChange={(value) => setStudentForm(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="graduated">Graduated</SelectItem>
                     <SelectItem value="transferred">Transferred</SelectItem>
-                    <SelectItem value="dropped">Dropped</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={studentForm.firstName}
-                  onChange={(e) => setStudentForm({ ...studentForm, firstName: e.target.value })}
-                />
+                <Label>First Name *</Label>
+                <Input value={studentForm.firstName} onChange={(e) => setStudentForm(prev => ({ ...prev, firstName: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  value={studentForm.lastName}
-                  onChange={(e) => setStudentForm({ ...studentForm, lastName: e.target.value })}
-                />
+                <Label>Last Name *</Label>
+                <Input value={studentForm.lastName} onChange={(e) => setStudentForm(prev => ({ ...prev, lastName: e.target.value }))} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={studentForm.dateOfBirth}
-                  onChange={(e) => setStudentForm({ ...studentForm, dateOfBirth: e.target.value })}
-                />
+                <Label>Date of Birth</Label>
+                <Input type="date" value={studentForm.dateOfBirth} onChange={(e) => setStudentForm(prev => ({ ...prev, dateOfBirth: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select value={studentForm.gender || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, gender: v === "none" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
+                <Label>Gender</Label>
+                <Select value={studentForm.gender} onValueChange={(value) => setStudentForm(prev => ({ ...prev, gender: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Not specified</SelectItem>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <Separator />
+            <h4 className="font-medium">Contact Information</h4>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="classId">Class</Label>
-                <Select value={studentForm.classId || "no-class"} onValueChange={(v) => setStudentForm({ ...studentForm, classId: v === "no-class" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
+                <Label>Email</Label>
+                <Input type="email" value={studentForm.email} onChange={(e) => setStudentForm(prev => ({ ...prev, email: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input value={studentForm.phone} onChange={(e) => setStudentForm(prev => ({ ...prev, phone: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Textarea value={studentForm.address} onChange={(e) => setStudentForm(prev => ({ ...prev, address: e.target.value }))} />
+            </div>
+            <Separator />
+            <h4 className="font-medium">Primary Guardian</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Guardian Name</Label>
+                <Input value={studentForm.guardianName} onChange={(e) => setStudentForm(prev => ({ ...prev, guardianName: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Relation</Label>
+                <Select value={studentForm.guardianRelation} onValueChange={(value) => setStudentForm(prev => ({ ...prev, guardianRelation: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-class">No class assigned</SelectItem>
-                    {classes.filter(cls => cls.id).map(cls => (
+                    <SelectItem value="father">Father</SelectItem>
+                    <SelectItem value="mother">Mother</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Guardian Phone</Label>
+                <Input value={studentForm.guardianPhone} onChange={(e) => setStudentForm(prev => ({ ...prev, guardianPhone: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Guardian Email</Label>
+                <Input type="email" value={studentForm.guardianEmail} onChange={(e) => setStudentForm(prev => ({ ...prev, guardianEmail: e.target.value }))} />
+              </div>
+            </div>
+            <Separator />
+            <h4 className="font-medium">Academic Information</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Class</Label>
+                <Select value={studentForm.classId} onValueChange={(value) => setStudentForm(prev => ({ ...prev, classId: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                  <SelectContent>
+                    {classes.map(cls => (
                       <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={studentForm.email}
-                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                />
+                <Label>Session</Label>
+                <Select value={studentForm.sessionId} onValueChange={(value) => setStudentForm(prev => ({ ...prev, sessionId: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
+                  <SelectContent>
+                    {sessions.map(sess => (
+                      <SelectItem key={sess.id} value={sess.id}>{sess.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={studentForm.phone}
-                  onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                value={studentForm.address}
-                onChange={(e) => setStudentForm({ ...studentForm, address: e.target.value })}
-              />
-            </div>
-            
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Primary Guardian</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="guardianName">Name</Label>
-                  <Input
-                    id="guardianName"
-                    value={studentForm.guardianName}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardianName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardianRelation">Relationship</Label>
-                  <Select value={studentForm.guardianRelation || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, guardianRelation: v === "none" ? "" : v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not specified</SelectItem>
-                      <SelectItem value="Father">Father</SelectItem>
-                      <SelectItem value="Mother">Mother</SelectItem>
-                      <SelectItem value="Guardian">Guardian</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="guardianPhone">Phone</Label>
-                  <Input
-                    id="guardianPhone"
-                    value={studentForm.guardianPhone}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardianPhone: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardianEmail">Email</Label>
-                  <Input
-                    id="guardianEmail"
-                    type="email"
-                    value={studentForm.guardianEmail}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardianEmail: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="guardianAddress">Address</Label>
-                <Input
-                  id="guardianAddress"
-                  value={studentForm.guardianAddress}
-                  onChange={(e) => setStudentForm({ ...studentForm, guardianAddress: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Second Guardian (Optional)</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="guardian2Name">Name</Label>
-                  <Input
-                    id="guardian2Name"
-                    value={studentForm.guardian2Name}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardian2Name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardian2Relation">Relationship</Label>
-                  <Select value={studentForm.guardian2Relation || "none"} onValueChange={(v) => setStudentForm({ ...studentForm, guardian2Relation: v === "none" ? "" : v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Not specified</SelectItem>
-                      <SelectItem value="Father">Father</SelectItem>
-                      <SelectItem value="Mother">Mother</SelectItem>
-                      <SelectItem value="Guardian">Guardian</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="guardian2Phone">Phone</Label>
-                  <Input
-                    id="guardian2Phone"
-                    value={studentForm.guardian2Phone}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardian2Phone: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardian2Email">Email</Label>
-                  <Input
-                    id="guardian2Email"
-                    type="email"
-                    value={studentForm.guardian2Email}
-                    onChange={(e) => setStudentForm({ ...studentForm, guardian2Email: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="guardian2Address">Address</Label>
-                <Input
-                  id="guardian2Address"
-                  value={studentForm.guardian2Address}
-                  onChange={(e) => setStudentForm({ ...studentForm, guardian2Address: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3">Academic Info</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sessionId">Session</Label>
-                  <Select value={studentForm.sessionId || "no-session"} onValueChange={(v) => setStudentForm({ ...studentForm, sessionId: v === "no-session" ? "" : v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select session" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no-session">Not assigned</SelectItem>
-                      {sessions.filter(sess => sess.id).map(sess => (
-                        <SelectItem key={sess.id} value={sess.id}>{sess.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="enrollmentDate">Enrollment Date</Label>
-                  <Input
-                    id="enrollmentDate"
-                    type="date"
-                    value={studentForm.enrollmentDate}
-                    onChange={(e) => setStudentForm({ ...studentForm, enrollmentDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sessionStartDate">Session Start Date</Label>
-                  <Input
-                    id="sessionStartDate"
-                    type="date"
-                    value={studentForm.sessionStartDate}
-                    onChange={(e) => {
-                      const startDate = e.target.value;
-                      setStudentForm({ ...studentForm, sessionStartDate: startDate });
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Expected Completion (9 Months)</Label>
-                  <Input
-                    disabled
-                    value={studentForm.sessionStartDate ? (() => {
-                      const start = new Date(studentForm.sessionStartDate);
-                      const end = new Date(start);
-                      end.setMonth(end.getMonth() + 9);
-                      return end.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                    })() : "Auto-calculated"}
-                    className="bg-muted"
-                  />
-                </div>
-              </div>
-              {studentForm.sessionStartDate && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  <span className="text-green-600 font-medium">Academic Duration:</span> 9 months from Session Start Date
-                </div>
-              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStudentDialog(false)}>Cancel</Button>
             <Button onClick={editingStudent ? handleUpdateStudent : handleCreateStudent}>
-              {editingStudent ? "Update" : "Add"} Student
+              {editingStudent ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2483,7 +2881,7 @@ export function EducationDashboard() {
 
       {/* Teacher Dialog */}
       <Dialog open={teacherDialog} onOpenChange={setTeacherDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTeacher ? "Edit Teacher" : "Add New Teacher"}</DialogTitle>
             <DialogDescription>
@@ -2493,20 +2891,13 @@ export function EducationDashboard() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="employeeId">Employee ID</Label>
-                <Input
-                  id="employeeId"
-                  value={teacherForm.employeeId}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, employeeId: e.target.value })}
-                  placeholder="Auto-generated if empty"
-                />
+                <Label>Employee ID *</Label>
+                <Input value={teacherForm.employeeId} onChange={(e) => setTeacherForm(prev => ({ ...prev, employeeId: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={teacherForm.status} onValueChange={(v) => setTeacherForm({ ...teacherForm, status: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Status</Label>
+                <Select value={teacherForm.status} onValueChange={(value) => setTeacherForm(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="on_leave">On Leave</SelectItem>
@@ -2518,74 +2909,39 @@ export function EducationDashboard() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="teacherFirstName">First Name *</Label>
-                <Input
-                  id="teacherFirstName"
-                  value={teacherForm.firstName}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, firstName: e.target.value })}
-                />
+                <Label>First Name *</Label>
+                <Input value={teacherForm.firstName} onChange={(e) => setTeacherForm(prev => ({ ...prev, firstName: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teacherLastName">Last Name *</Label>
-                <Input
-                  id="teacherLastName"
-                  value={teacherForm.lastName}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, lastName: e.target.value })}
-                />
+                <Label>Last Name *</Label>
+                <Input value={teacherForm.lastName} onChange={(e) => setTeacherForm(prev => ({ ...prev, lastName: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="teacherEmail">Email</Label>
-                <Input
-                  id="teacherEmail"
-                  type="email"
-                  value={teacherForm.email}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, email: e.target.value })}
-                />
+                <Label>Email</Label>
+                <Input type="email" value={teacherForm.email} onChange={(e) => setTeacherForm(prev => ({ ...prev, email: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teacherPhone">Phone</Label>
-                <Input
-                  id="teacherPhone"
-                  value={teacherForm.phone}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, phone: e.target.value })}
-                />
+                <Label>Phone</Label>
+                <Input value={teacherForm.phone} onChange={(e) => setTeacherForm(prev => ({ ...prev, phone: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="qualification">Qualification</Label>
-                <Input
-                  id="qualification"
-                  value={teacherForm.qualification}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, qualification: e.target.value })}
-                  placeholder="e.g., PhD, Masters"
-                />
+                <Label>Qualification</Label>
+                <Input value={teacherForm.qualification} onChange={(e) => setTeacherForm(prev => ({ ...prev, qualification: e.target.value }))} placeholder="e.g., PhD, Masters" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="specialization">Specialization</Label>
-                <Input
-                  id="specialization"
-                  value={teacherForm.specialization}
-                  onChange={(e) => setTeacherForm({ ...teacherForm, specialization: e.target.value })}
-                  placeholder="e.g., Math, Science"
-                />
+                <Label>Specialization</Label>
+                <Input value={teacherForm.specialization} onChange={(e) => setTeacherForm(prev => ({ ...prev, specialization: e.target.value }))} placeholder="e.g., Mathematics" />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacherAddress">Address</Label>
-              <Textarea
-                id="teacherAddress"
-                value={teacherForm.address}
-                onChange={(e) => setTeacherForm({ ...teacherForm, address: e.target.value })}
-              />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTeacherDialog(false)}>Cancel</Button>
             <Button onClick={editingTeacher ? handleUpdateTeacher : handleCreateTeacher}>
-              {editingTeacher ? "Update" : "Add"} Teacher
+              {editingTeacher ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2593,7 +2949,7 @@ export function EducationDashboard() {
 
       {/* Class Dialog */}
       <Dialog open={classDialog} onOpenChange={setClassDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingClass ? "Edit Class" : "Add New Class"}</DialogTitle>
             <DialogDescription>
@@ -2602,60 +2958,37 @@ export function EducationDashboard() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="className">Class Name *</Label>
-              <Input
-                id="className"
-                value={classForm.name}
-                onChange={(e) => setClassForm({ ...classForm, name: e.target.value })}
-                placeholder="e.g., Class 10-A"
-              />
+              <Label>Class Name *</Label>
+              <Input value={classForm.name} onChange={(e) => setClassForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g., Class 10-A" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="grade">Grade</Label>
-                <Input
-                  id="grade"
-                  value={classForm.grade}
-                  onChange={(e) => setClassForm({ ...classForm, grade: e.target.value })}
-                  placeholder="e.g., 10th Grade"
-                />
+                <Label>Grade</Label>
+                <Input value={classForm.grade} onChange={(e) => setClassForm(prev => ({ ...prev, grade: e.target.value }))} placeholder="e.g., 10th Grade" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="section">Section</Label>
-                <Input
-                  id="section"
-                  value={classForm.section}
-                  onChange={(e) => setClassForm({ ...classForm, section: e.target.value })}
-                  placeholder="e.g., A"
-                />
+                <Label>Section</Label>
+                <Input value={classForm.section} onChange={(e) => setClassForm(prev => ({ ...prev, section: e.target.value }))} placeholder="e.g., A" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="classTeacher">Class Teacher</Label>
-                <Select value={classForm.teacherId || "no-teacher"} onValueChange={(v) => setClassForm({ ...classForm, teacherId: v === "no-teacher" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select teacher" />
-                  </SelectTrigger>
+                <Label>Class Teacher</Label>
+                <Select value={classForm.teacherId} onValueChange={(value) => setClassForm(prev => ({ ...prev, teacherId: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select teacher" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-teacher">Not assigned</SelectItem>
-                    {teachers.filter(t => t.status === "active" && t.id).map(teacher => (
-                      <SelectItem key={teacher.id} value={teacher.id}>
-                        {teacher.firstName} {teacher.lastName}
-                      </SelectItem>
+                    {teachers.map(teacher => (
+                      <SelectItem key={teacher.id} value={teacher.id}>{teacher.firstName} {teacher.lastName}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="classSession">Session</Label>
-                <Select value={classForm.sessionId || "no-session"} onValueChange={(v) => setClassForm({ ...classForm, sessionId: v === "no-session" ? "" : v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select session" />
-                  </SelectTrigger>
+                <Label>Session</Label>
+                <Select value={classForm.sessionId} onValueChange={(value) => setClassForm(prev => ({ ...prev, sessionId: value }))}>
+                  <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-session">Not assigned</SelectItem>
-                    {sessions.filter(sess => sess.id).map(sess => (
+                    {sessions.map(sess => (
                       <SelectItem key={sess.id} value={sess.id}>{sess.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -2664,28 +2997,19 @@ export function EducationDashboard() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={classForm.capacity}
-                  onChange={(e) => setClassForm({ ...classForm, capacity: parseInt(e.target.value) || 30 })}
-                />
+                <Label>Capacity</Label>
+                <Input type="number" value={classForm.capacity} onChange={(e) => setClassForm(prev => ({ ...prev, capacity: parseInt(e.target.value) || 30 }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="roomNumber">Room Number</Label>
-                <Input
-                  id="roomNumber"
-                  value={classForm.roomNumber}
-                  onChange={(e) => setClassForm({ ...classForm, roomNumber: e.target.value })}
-                />
+                <Label>Room Number</Label>
+                <Input value={classForm.roomNumber} onChange={(e) => setClassForm(prev => ({ ...prev, roomNumber: e.target.value }))} />
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setClassDialog(false)}>Cancel</Button>
             <Button onClick={editingClass ? handleUpdateClass : handleCreateClass}>
-              {editingClass ? "Update" : "Add"} Class
+              {editingClass ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2693,121 +3017,81 @@ export function EducationDashboard() {
 
       {/* Session Dialog */}
       <Dialog open={sessionDialog} onOpenChange={setSessionDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingSession ? "Edit Session" : "Add New Session"}</DialogTitle>
             <DialogDescription>
-              {editingSession ? "Update session information" : "Enter session details. End date is auto-calculated as 9 months from start date."}
+              {editingSession ? "Update session information" : "Enter session details"}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="sessionName">Session Name *</Label>
-              <Input
-                id="sessionName"
-                value={sessionForm.name}
-                onChange={(e) => setSessionForm({ ...sessionForm, name: e.target.value })}
-                placeholder="e.g., 2024-2025 Academic Year"
-              />
+              <Label>Session Name *</Label>
+              <Input value={sessionForm.name} onChange={(e) => setSessionForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g., 2024-2025 Academic Year" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sessionStart">Start Date *</Label>
-                <Input
-                  id="sessionStart"
-                  type="date"
-                  value={sessionForm.startDate}
-                  onChange={(e) => setSessionForm({ ...sessionForm, startDate: e.target.value })}
-                />
+                <Label>Start Date *</Label>
+                <Input type="date" value={sessionForm.startDate} onChange={(e) => setSessionForm(prev => ({ ...prev, startDate: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sessionEnd">End Date</Label>
-                <Input
-                  id="sessionEnd"
-                  type="date"
-                  value={sessionForm.endDate}
-                  onChange={(e) => setSessionForm({ ...sessionForm, endDate: e.target.value })}
-                />
+                <Label>End Date *</Label>
+                <Input type="date" value={sessionForm.endDate} onChange={(e) => setSessionForm(prev => ({ ...prev, endDate: e.target.value }))} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sessionDescription">Description</Label>
-              <Textarea
-                id="sessionDescription"
-                value={sessionForm.description}
-                onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
-              />
+              <Label>Description</Label>
+              <Textarea value={sessionForm.description} onChange={(e) => setSessionForm(prev => ({ ...prev, description: e.target.value }))} />
             </div>
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isCurrent"
-                checked={sessionForm.isCurrent}
-                onChange={(e) => setSessionForm({ ...sessionForm, isCurrent: e.target.checked })}
-                className="h-4 w-4"
+              <Checkbox 
+                id="isCurrent" 
+                checked={sessionForm.isCurrent} 
+                onCheckedChange={(checked) => setSessionForm(prev => ({ ...prev, isCurrent: checked as boolean }))}
               />
-              <Label htmlFor="isCurrent">Set as current session</Label>
+              <Label htmlFor="isCurrent">Set as Current Session</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSessionDialog(false)}>Cancel</Button>
             <Button onClick={editingSession ? handleUpdateSession : handleCreateSession}>
-              {editingSession ? "Update" : "Add"} Session
+              {editingSession ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Settings Dialog */}
+      {/* School Settings Dialog */}
       <Dialog open={settingsDialog} onOpenChange={setSettingsDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>School Settings</DialogTitle>
-            <DialogDescription>Configure your school information</DialogDescription>
+            <DialogDescription>
+              Configure your school information
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="schoolName">School Name *</Label>
-              <Input
-                id="schoolName"
-                value={settingsForm.schoolName}
-                onChange={(e) => setSettingsForm({ ...settingsForm, schoolName: e.target.value })}
-              />
+              <Label>School Name *</Label>
+              <Input value={settingsForm.schoolName} onChange={(e) => setSettingsForm(prev => ({ ...prev, schoolName: e.target.value }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="schoolPhone">Phone</Label>
-                <Input
-                  id="schoolPhone"
-                  value={settingsForm.schoolPhone}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, schoolPhone: e.target.value })}
-                />
+                <Label>School Phone</Label>
+                <Input value={settingsForm.schoolPhone} onChange={(e) => setSettingsForm(prev => ({ ...prev, schoolPhone: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="schoolEmail">Email</Label>
-                <Input
-                  id="schoolEmail"
-                  type="email"
-                  value={settingsForm.schoolEmail}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, schoolEmail: e.target.value })}
-                />
+                <Label>School Email</Label>
+                <Input type="email" value={settingsForm.schoolEmail} onChange={(e) => setSettingsForm(prev => ({ ...prev, schoolEmail: e.target.value }))} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="schoolAddress">Address</Label>
-              <Textarea
-                id="schoolAddress"
-                value={settingsForm.schoolAddress}
-                onChange={(e) => setSettingsForm({ ...settingsForm, schoolAddress: e.target.value })}
-              />
+              <Label>School Address</Label>
+              <Textarea value={settingsForm.schoolAddress} onChange={(e) => setSettingsForm(prev => ({ ...prev, schoolAddress: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="principalName">Principal Name</Label>
-              <Input
-                id="principalName"
-                value={settingsForm.principalName}
-                onChange={(e) => setSettingsForm({ ...settingsForm, principalName: e.target.value })}
-              />
+              <Label>Principal Name</Label>
+              <Input value={settingsForm.principalName} onChange={(e) => setSettingsForm(prev => ({ ...prev, principalName: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
@@ -2817,82 +3101,240 @@ export function EducationDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Message Dialog */}
-      <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
-        <DialogContent className="max-w-md">
+      {/* Template Dialog */}
+      <Dialog open={templateDialog} onOpenChange={setTemplateDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Message via WhatsApp</DialogTitle>
+            <DialogTitle>{editingTemplate ? "Edit Template" : "Create Message Template"}</DialogTitle>
             <DialogDescription>
-              Send a message to {selectedStudentForMessage?.guardianName || "Guardian"}
+              Create a reusable message template with variable support
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Phone: {selectedStudentForMessage?.guardianPhone}
-            </p>
-            
-            {/* Custom Message Input */}
-            <div className="space-y-2">
-              <Label htmlFor="customMessage">Custom Message</Label>
-              <Textarea
-                id="customMessage"
-                placeholder="Type your custom message here..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
-              <Button 
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => {
-                  if (selectedStudentForMessage?.guardianPhone && customMessage.trim()) {
-                    sendWhatsAppMessage(selectedStudentForMessage.guardianPhone, customMessage);
-                  } else if (!customMessage.trim()) {
-                    toast({ title: "Error", description: "Please enter a message", variant: "destructive" });
-                  }
-                }}
-              >
-                <Send className="h-4 w-4 mr-2" />
-                Send via WhatsApp
-              </Button>
-            </div>
-
-            {/* Quick Message Templates */}
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Quick Templates (Click to Send)</Label>
-              <div className="grid gap-2">
-                {messageTemplates.map((tmpl) => (
-                  <Button 
-                    key={tmpl.id}
-                    variant="outline" 
-                    size="sm"
-                    className="justify-start text-left h-auto py-2"
-                    onClick={() => {
-                      if (selectedStudentForMessage?.guardianPhone) {
-                        const message = tmpl.template
-                          .replace(/{{student_name}}/g, `${selectedStudentForMessage.firstName} ${selectedStudentForMessage.lastName}`)
-                          .replace(/{{school_name}}/g, schoolSettings?.schoolName || "School");
-                        sendWhatsAppMessage(selectedStudentForMessage.guardianPhone, message);
-                      }
-                    }}
-                  >
-                    <Send className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{tmpl.name}</span>
-                  </Button>
-                ))}
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Template Name *</Label>
+                <Input value={templateForm.name} onChange={(e) => setTemplateForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g., Absence Notification" />
+              </div>
+              <div className="space-y-2">
+                <Label>Category *</Label>
+                <Select value={templateForm.category} onValueChange={(value) => setTemplateForm(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="absence">Absence</SelectItem>
+                    <SelectItem value="delay">Delay</SelectItem>
+                    <SelectItem value="reminder">Reminder</SelectItem>
+                    <SelectItem value="fee">Fee</SelectItem>
+                    <SelectItem value="event">Event</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
-            {/* Info Note */}
-            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-              <strong>Note:</strong> Clicking any button will open WhatsApp Web in a new tab with the message pre-filled. You can edit before sending.
+            {(templateForm.category === "absence" || templateForm.category === "delay") && !editingTemplate && (
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="usePredefined" 
+                  checked={templateForm.usePredefined} 
+                  onCheckedChange={(checked) => setTemplateForm(prev => ({ ...prev, usePredefined: checked as boolean }))}
+                />
+                <Label htmlFor="usePredefined">Use predefined {templateForm.category} template</Label>
+              </div>
+            )}
+            
+            {!templateForm.usePredefined && (
+              <div className="space-y-2">
+                <Label>Message Body *</Label>
+                <Textarea 
+                  value={templateForm.body} 
+                  onChange={(e) => setTemplateForm(prev => ({ ...prev, body: e.target.value }))} 
+                  placeholder="Dear Parent/Guardian, {{student_name}} was marked {{status}} on {{date}}."
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Variables: {`{{student_name}}`}, {`{{date}}`}, {`{{class_name}}`}, {`{{status}}`}, {`{{school_name}}`}
+                </p>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="isDefault" 
+                checked={templateForm.isDefault} 
+                onCheckedChange={(checked) => setTemplateForm(prev => ({ ...prev, isDefault: checked as boolean }))}
+              />
+              <Label htmlFor="isDefault">Set as default for this category</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setMessageDialog(false);
-              setCustomMessage("");
-            }}>Close</Button>
+            <Button variant="outline" onClick={() => setTemplateDialog(false)}>Cancel</Button>
+            <Button onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}>
+              {editingTemplate ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Dialog */}
+      <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Message to Guardian</DialogTitle>
+            <DialogDescription>
+              Send a WhatsApp message to {selectedStudentForMessage?.guardianName || "guardian"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input value={selectedStudentForMessage?.guardianPhone || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Select Template</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger><SelectValue placeholder="Choose a template or write custom" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Custom Message</SelectItem>
+                  {templates.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <Textarea 
+                value={customMessage} 
+                onChange={(e) => setCustomMessage(e.target.value)} 
+                rows={5}
+                placeholder="Type your message here..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (selectedStudentForMessage?.guardianPhone) {
+                  let message = customMessage;
+                  if (selectedTemplateId) {
+                    const template = templates.find(t => t.id === selectedTemplateId);
+                    if (template) {
+                      message = template.body
+                        .replace(/\{\{student_name\}\}/g, `${selectedStudentForMessage.firstName} ${selectedStudentForMessage.lastName}`)
+                        .replace(/\{\{date\}\}/g, format(new Date(), "MMMM dd, yyyy"))
+                        .replace(/\{\{class_name\}\}/g, selectedStudentForMessage.class?.name || "")
+                        .replace(/\{\{school_name\}\}/g, schoolSettings?.schoolName || "School");
+                    }
+                  }
+                  sendWhatsAppMessage(selectedStudentForMessage.guardianPhone, message, selectedStudentForMessage.id);
+                  setMessageDialog(false);
+                  setCustomMessage("");
+                  setSelectedTemplateId("");
+                }
+              }}
+              disabled={!customMessage && !selectedTemplateId}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Send via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Module Dialog */}
+      <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Module / Subject</DialogTitle>
+            <DialogDescription>
+              Create a new education module for class scheduling
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Module Name *</Label>
+              <Input 
+                value={moduleForm.name} 
+                onChange={(e) => setModuleForm(prev => ({ ...prev, name: e.target.value }))} 
+                placeholder="e.g., Mathematics, Physics, English"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Code</Label>
+                <Input 
+                  value={moduleForm.code} 
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, code: e.target.value }))} 
+                  placeholder="e.g., MATH101"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Credit Hours</Label>
+                <Input 
+                  type="number"
+                  value={moduleForm.creditHours} 
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, creditHours: parseInt(e.target.value) || 1 }))} 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <div className="flex gap-2 items-center">
+                <Input 
+                  type="color"
+                  value={moduleForm.color} 
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, color: e.target.value }))} 
+                  className="w-16 h-10 p-1"
+                />
+                <Input 
+                  value={moduleForm.color} 
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, color: e.target.value }))} 
+                  placeholder="#3B82F6"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea 
+                value={moduleForm.description} 
+                onChange={(e) => setModuleForm(prev => ({ ...prev, description: e.target.value }))} 
+                placeholder="Brief description of the module"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setModuleDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={async () => {
+                if (!moduleForm.name) {
+                  toast({ title: "Error", description: "Module name is required", variant: "destructive" });
+                  return;
+                }
+                try {
+                  const res = await fetch("/api/education/modules", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(moduleForm),
+                  });
+                  if (res.ok) {
+                    toast({ title: "Success", description: "Module created successfully" });
+                    setModuleDialog(false);
+                    setModuleForm({ name: "", code: "", description: "", color: "#3B82F6", creditHours: 1 });
+                    fetchData();
+                  } else {
+                    const error = await res.json();
+                    toast({ title: "Error", description: error.error || "Failed to create module", variant: "destructive" });
+                  }
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to create module", variant: "destructive" });
+                }
+              }}
+            >
+              Create Module
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2903,12 +3345,12 @@ export function EducationDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this {deleteTarget?.type}.
+              This will permanently delete this {deleteTarget?.type}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogAction 
               onClick={() => {
                 if (deleteTarget?.type === "student") handleDeleteStudent();
                 else if (deleteTarget?.type === "teacher") handleDeleteTeacher();
@@ -2922,6 +3364,216 @@ export function EducationDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Student Import Dialog */}
+      <Dialog open={studentImportDialog} onOpenChange={(open) => {
+        setStudentImportDialog(open);
+        if (!open) {
+          setImportFile(null);
+          setImportResult(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Students</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with student data to import multiple students at once.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    {importFile ? importFile.name : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">CSV file only</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setImportFile(file);
+                  }}
+                />
+              </label>
+            </div>
+            
+            {importResult && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{importResult.totalRows}</p>
+                      <p className="text-xs text-muted-foreground">Total Rows</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">{importResult.successCount}</p>
+                      <p className="text-xs text-muted-foreground">Success</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-600">{importResult.failCount}</p>
+                      <p className="text-xs text-muted-foreground">Failed</p>
+                    </div>
+                  </div>
+                  {importResult.errors?.length > 0 && (
+                    <div className="mt-4 max-h-32 overflow-y-auto">
+                      <p className="text-xs font-medium mb-2">Errors:</p>
+                      {importResult.errors.slice(0, 5).map((err: {row: number, message: string}, i: number) => (
+                        <p key={i} className="text-xs text-red-600">Row {err.row}: {err.message}</p>
+                      ))}
+                      {importResult.errors.length > 5 && (
+                        <p className="text-xs text-muted-foreground">...and {importResult.errors.length - 5} more errors</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStudentImportDialog(false)}>Close</Button>
+            <Button 
+              onClick={async () => {
+                if (!importFile) return;
+                setImporting(true);
+                try {
+                  const formData = new FormData();
+                  formData.append("file", importFile);
+                  const res = await fetch("/api/education/import/students", {
+                    method: "POST",
+                    body: formData,
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    setImportResult(data.data?.import || data.import);
+                    toast({ title: "Import Complete", description: `Imported ${data.data?.import?.successCount || 0} students` });
+                    fetchData();
+                  } else {
+                    const error = await res.json();
+                    toast({ title: "Error", description: error.error || "Failed to import", variant: "destructive" });
+                  }
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to import students", variant: "destructive" });
+                } finally {
+                  setImporting(false);
+                }
+              }}
+              disabled={!importFile || importing}
+            >
+              {importing ? "Importing..." : "Import"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Teacher Import Dialog */}
+      <Dialog open={teacherImportDialog} onOpenChange={(open) => {
+        setTeacherImportDialog(open);
+        if (!open) {
+          setImportFile(null);
+          setImportResult(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Teachers</DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with teacher data to import multiple teachers at once.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    {importFile ? importFile.name : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">CSV file only</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setImportFile(file);
+                  }}
+                />
+              </label>
+            </div>
+            
+            {importResult && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{importResult.totalRows}</p>
+                      <p className="text-xs text-muted-foreground">Total Rows</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">{importResult.successCount}</p>
+                      <p className="text-xs text-muted-foreground">Success</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-600">{importResult.failCount}</p>
+                      <p className="text-xs text-muted-foreground">Failed</p>
+                    </div>
+                  </div>
+                  {importResult.errors?.length > 0 && (
+                    <div className="mt-4 max-h-32 overflow-y-auto">
+                      <p className="text-xs font-medium mb-2">Errors:</p>
+                      {importResult.errors.slice(0, 5).map((err: {row: number, message: string}, i: number) => (
+                        <p key={i} className="text-xs text-red-600">Row {err.row}: {err.message}</p>
+                      ))}
+                      {importResult.errors.length > 5 && (
+                        <p className="text-xs text-muted-foreground">...and {importResult.errors.length - 5} more errors</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTeacherImportDialog(false)}>Close</Button>
+            <Button 
+              onClick={async () => {
+                if (!importFile) return;
+                setImporting(true);
+                try {
+                  const formData = new FormData();
+                  formData.append("file", importFile);
+                  const res = await fetch("/api/education/import/teachers", {
+                    method: "POST",
+                    body: formData,
+                  });
+                  if (res.ok) {
+                    const data = await res.json();
+                    setImportResult(data.data?.import || data.import);
+                    toast({ title: "Import Complete", description: `Imported ${data.data?.import?.successCount || 0} teachers` });
+                    fetchData();
+                  } else {
+                    const error = await res.json();
+                    toast({ title: "Error", description: error.error || "Failed to import", variant: "destructive" });
+                  }
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to import teachers", variant: "destructive" });
+                } finally {
+                  setImporting(false);
+                }
+              }}
+              disabled={!importFile || importing}
+            >
+              {importing ? "Importing..." : "Import"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

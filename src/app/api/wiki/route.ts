@@ -1,37 +1,23 @@
-import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ApiErrors, apiSuccess } from "@/lib/api-response";
-import { auditService } from "@/lib/services/audit.service";
 
 // GET - List wiki pages
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return ApiErrors.unauthorized();
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        memberships: {
-          where: { isActive: true },
-          take: 1,
-        },
-      },
+    // Get user's organization membership
+    const membership = await db.organizationMember.findFirst({
+      where: { userId: user.id, isActive: true },
     });
 
-    if (!user) {
-      return ApiErrors.forbidden("User not found");
-    }
-
-    // Get user's organization - require membership
-    const membership = user.memberships[0];
     if (!membership) {
       // Return empty array instead of error for users without org
-      return apiSuccess({ pages: [], message: "You are not a member of any organization" });
+      return NextResponse.json({ success: true, data: { pages: [] } });
     }
 
     const organizationId = membership.organizationId;
@@ -90,39 +76,41 @@ export async function GET(request: NextRequest) {
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     });
 
-    return apiSuccess({ pages });
-  } catch (error) {
+    return NextResponse.json({ success: true, data: { pages } });
+  } catch (error: any) {
     console.error("Error fetching wiki pages:", error);
-    return ApiErrors.internal("Failed to fetch wiki pages", error);
+    
+    // Check if it's a Prisma table not found error
+    if (error?.code === "P2021" || error?.message?.includes("does not exist")) {
+      return NextResponse.json({ success: true, data: { pages: [] } });
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to fetch wiki pages",
+      details: process.env.NODE_ENV === "development" ? error?.message : undefined 
+    }, { status: 500 });
   }
 }
 
 // POST - Create wiki page
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return ApiErrors.unauthorized();
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        memberships: {
-          where: { isActive: true },
-          take: 1,
-        },
-      },
+    // Get user's organization membership
+    const membership = await db.organizationMember.findFirst({
+      where: { userId: user.id, isActive: true },
     });
 
-    if (!user) {
-      return ApiErrors.forbidden("User not found");
-    }
-
-    // Get user's organization - require membership
-    const membership = user.memberships[0];
     if (!membership) {
-      return ApiErrors.badRequest("You must be a member of an organization to create wiki pages");
+      return NextResponse.json({ 
+        success: false, 
+        error: "You must be a member of an organization to create wiki pages" 
+      }, { status: 400 });
     }
 
     const organizationId = membership.organizationId;
@@ -131,7 +119,7 @@ export async function POST(request: NextRequest) {
     const { title, content, projectId, parentId, isPublished = true } = body;
 
     if (!title || !title.trim()) {
-      return ApiErrors.badRequest("Title is required");
+      return NextResponse.json({ success: false, error: "Title is required" }, { status: 400 });
     }
 
     // Generate slug
@@ -190,25 +178,16 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if version creation fails
     }
 
-    // Log the action
-    try {
-      await auditService.log({
-        organizationId,
-        projectId: projectId || undefined,
-        entityType: "WIKI_PAGE",
-        entityId: page.id,
-        action: "CREATE",
-        newValue: { title: page.title, slug: page.slug },
-        performedBy: user.id,
-      });
-    } catch (auditError) {
-      console.error("Failed to log audit:", auditError);
-      // Don't fail the request if audit logging fails
-    }
-
-    return apiSuccess({ page, message: "Wiki page created successfully" }, { status: 201 });
-  } catch (error) {
+    return NextResponse.json({ 
+      success: true, 
+      data: { page, message: "Wiki page created successfully" } 
+    }, { status: 201 });
+  } catch (error: any) {
     console.error("Error creating wiki page:", error);
-    return ApiErrors.internal("Failed to create wiki page", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to create wiki page",
+      details: process.env.NODE_ENV === "development" ? error?.message : undefined 
+    }, { status: 500 });
   }
 }

@@ -127,8 +127,12 @@ interface AppState {
   setTheme: (theme: "light" | "dark" | "system") => void;
   
   // View State
-  activeView: "dashboard" | "projects" | "kanban" | "gantt" | "calendar" | "chat" | "settings";
+  activeView: "dashboard" | "projects" | "kanban" | "gantt" | "calendar" | "chat" | "settings"
   setActiveView: (view: "dashboard" | "projects" | "kanban" | "gantt" | "calendar" | "chat" | "settings") => void;
+  
+  // Language
+  language: "en" | "fr";
+  setLanguage: (lang: "en" | "fr") => void;
   
   // Loading states
   isLoading: boolean;
@@ -227,6 +231,10 @@ export const useAppStore = create<AppState>()(
         activeView: "dashboard",
         setActiveView: (view) => set({ activeView: view }),
         
+        // Language
+        language: "en",
+        setLanguage: (lang) => set({ language: lang }),
+        
         // Loading
         isLoading: false,
         setIsLoading: (loading) => set({ isLoading: loading }),
@@ -237,6 +245,7 @@ export const useAppStore = create<AppState>()(
           sidebarOpen: state.sidebarOpen,
           theme: state.theme,
           activeView: state.activeView,
+          language: state.language,
         }),
       }
     )

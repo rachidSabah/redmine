@@ -19,8 +19,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
+  // Get the base URL for the session provider
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+
   return (
-    <SessionProvider>
+    <SessionProvider 
+      basePath="/api/auth"
+      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchOnWindowFocus={true}
+    >
       <QueryClientProvider client={queryClient}>
         <ErrorBoundary>
           {children}

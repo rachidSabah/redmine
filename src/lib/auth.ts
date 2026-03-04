@@ -38,6 +38,9 @@ declare module "next-auth/jwt" {
   }
 }
 
+// Detect if we're in production
+const isProduction = process.env.NODE_ENV === "production";
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -49,41 +52,63 @@ export const authOptions: NextAuthOptions = {
     signOut: "/auth/signout",
     error: "/auth/error",
   },
-  cookies: {
+  // Configure cookies for production - simpler approach
+  cookies: isProduction ? {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
-        ? `__Secure-next-auth.session-token`
-        : `next-auth.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
       },
     },
     callbackUrl: {
-      name: process.env.NODE_ENV === 'production'
-        ? `__Secure-next-auth.callback-url`
-        : `next-auth.callback-url`,
+      name: `next-auth.callback-url`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
       },
     },
     csrfToken: {
-      name: process.env.NODE_ENV === 'production'
-        ? `__Host-next-auth.csrf-token`
-        : `next-auth.csrf-token`,
+      name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
       },
     },
-  },
+    pkceCodeVerifier: {
+      name: `next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
+    state: {
+      name: `next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
+    nonce: {
+      name: `next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
+  } : undefined,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -165,6 +190,8 @@ export const authOptions: NextAuthOptions = {
           console.log("Could not update lastLoginAt");
         }
 
+        console.log("User authenticated successfully:", user.email, "Role:", user.memberships[0]?.role || "GUEST");
+
         return {
           id: user.id,
           email: user.email,
@@ -178,6 +205,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -221,13 +249,21 @@ export const authOptions: NextAuthOptions = {
 
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   events: {
     async signIn({ user }) {
       console.log(`User signed in: ${user.email}`);
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  // Enable debug in all environments temporarily
+  debug: true,
 };
 
 export const getServerSession = async () => {

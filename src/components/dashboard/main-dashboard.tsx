@@ -2041,3 +2041,6 @@ function DashboardContent() {
 }
 
 export default DashboardContent;
+
+// Named export for compatibility
+export { DashboardContent as MainDashboard };

@@ -101,6 +101,12 @@ export const ApiErrors = {
 
   tooManyRequests: (message = "Too many requests"): NextResponse<ApiResponse> =>
     NextResponse.json({ success: false, error: message }, { status: 429 }),
+
+  unprocessableEntity: (message = "Unprocessable entity", errors?: unknown): NextResponse<ApiResponse> =>
+    NextResponse.json(
+      { success: false, error: message, errors },
+      { status: 422 }
+    ),
 };
 
 /**

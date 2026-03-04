@@ -159,8 +159,16 @@ export async function POST(request: NextRequest) {
       return ApiErrors.badRequest("Attendance records are required");
     }
 
-    const results = [];
-    const automationTriggers = [];
+    const results: any[] = [];
+    const automationTriggers: {
+      attendanceId: string;
+      studentId: string;
+      status: string;
+      guardianPhone: string | null;
+      guardianName: string | null;
+      studentName: string;
+      date: Date;
+    }[] = [];
 
     for (const record of attendanceRecords) {
       const {

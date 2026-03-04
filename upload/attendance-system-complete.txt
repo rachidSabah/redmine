@@ -1,0 +1,3037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Student Attendance Management System v2.0 - Complete</title>
+    
+    <!-- External Libraries -->
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=zEtaHs0fcjV5NiPsqaCCOdD5YpwRWKADaerqjEa6lPNVckg0EcExCqL2jNoBt2diIvgUdBdgTlT-ChaxeD__cqDbuEviQygeRLFC7Ho9Icu8sqauQ-npzJcDDDA9u6kToOLxGHMLYEkDVrsUfrTrqIc-8YvJPG_dgr0BLtyyX4XEYV6vlR-Oogf_T8ED3qxVrPmAGYtLAFOS66VUMBm6czH129DSRzi5g2Rg1sRsxmCcLR_WJrK_AmJQPZV5mCBsrpqEkCGBGPB0WhkznfLNEFGbW-eqmREso12VwuVdZeZz2hS_Ys7_RVLhgd78MPbx-R1raUP_FDL_N7S5mH5VxpyhGXqSt2Mr0GiI5mMfB3z5Bz6KswDIUkkURVVoxJ7mh5UA_nyWFfSz-bnyhhFNSuMDbdaV96DNfZfUgmsGqQBa8ns8JsbDQDDYKmnW-trLUnzi8uQb8crfeGB311kTJRLcVf08lZbOTa0OWWj2iHGTuMJS3wCTAC5uewW9h3SQgjTqJiVBtzlN9MyBIJ5QFvT0YqUO8pDhTg3tOKvsrMeWdnfL8ZMslWJ6U1b_RNJxCXgzvYP-rEyl_176LJurJ7RnBrc10uMPx15jZjwO1ytpfz512UtJYu2W1ULB2G9vyBWY9_Z5kcDWUy-oOpC2INDEn0ohzhixh4iJ0tFYkr7UrGWbMja2xGGewKHnsNjZbgkxqyeXUAk8l0ABGRlHuTsKYFHNM2cEaawpc0r1Iyt4uFdhOsjVYOsB1nIRUbQv2u42gsW5JlaOUMjrdE5_Y5izCQOkxR6b9KKMNKg2lJ5GvhwA3meETC25dGjhgK5ctvvl1sD9VIkxUNXV57pHcztkQZLZmUTGPPXuVopkjc9Yg-NU6HjWVcG4UiJDdGc6W4F5Y0VY0b_3a9m9AeEMqK4XnOZy_rNO84t6hm0fOXTQC0B6RpDPtTV22x3Ga57yy89r6wQWnYNUW7ldAc-nm0wyQ_CEdaNADFSVbA5FejfKBRKQFj5bNLuGR-yXnL8rghhlMLjyOuuQ90RWEPT8IS7bmvh9BDnU8P3EWy8_OUrwKMU9eROyZSrHj1P0eWkSw-mO8f48MtgU5qA4JGUajet48ili71YQz71B8XKC1TDFUWFGQ5sEhY5T6_EXyDTN0acslYoCxgbSuKGcT5U8Q0IyG3rWcDSuMxP14xqbi9yAt9mSLnmTCn9JDEOZqIEEWkrQ-a0R4SDdLEtmJIAg77h8A6_jtuGGb2ckLLheN7z_pRnYDCnAhTrztrntm10rd0jktHfYmqcFiLACeZvQ-_wttcHJR-qbu6oOBUuCYtjlr02OOdCfW45bTqmKR45B0xHi_aCvsLjxGoOB_3BdGdfdVMQ7lauV3PusGG9rugcDex2D5FQ6lfRV2x_-fcIBgpDEasoxvmT2H_AaQfJer7uNOpVjaj4HedxHqQ__1OJCsfML9oRGya-2409qmyWDp0GwQLq5a1aqre0THrUdlNtA4SwRMp41yT0VCYpO_sRaEO8fzQ8s8wtqA7xrWhgrgAokMHvX672qAXWm7UBtdpAw3hyX5itdgGrBHnb4dNjzDvcOfwR4F4hxYJnryc9rmcRc8pRF36EUASeAYmPylMgc-Abp8ud-DaAp5wtoZTolimWxTd77w_rTAVQWOArIvErNnsU-UuvL_OugX5qpyKnDJrPpq9nuopd6A3PknuZXKh90XK0A-eubSJLKX1ARiER9PMPy6vaXXjEypi5Cyj3T4PXcLUtBQF9496vpOveFe-OP9EHXfEikvOAvrqZAqPO3Tap9C13GN7mj73Vid2yOaRtQUSJQErqhao_81CCjodFCDSIh4G5MF_qJYa088twWJJ_igpkNm7i1D3O32Ue2nM8_AcBTmfRs4gHLMOv4QGnrSX5h2MExw_XwHWghjpThsKY7XgOBPpGS1_7p0MjRoEMdL9qnes-cm2fIncVe93TM1wcg8Q4STRv0mxStEGBQax-dYm7IjyynP4ZRkHa07CdoQ2-wpKEz9VGpYFxF1cJzeg18UlRntRyrqONV-4DGwX5JA0bKjPpeD4oHM7AqjOOCfuGljlYxhoT-f333Qe4tdgj9vjrKyeqMEe0fWzff6cFp6QHhV5tDemK5hDqSiGQzXl1C85bqPabItmRV8FcQSDzJLOpwK-tJ0yhZjNBan-bJAXDBgtml3J25aA89NR3mWtp4u7vYc9g-7xVYOKBmVlb53DVyuFofeAYiPFVqYTQOkhcKk_XoW7t2sl7d7aIy9TCmT6_DzMp6JzxbsvQmdxrEHqgrpPRPyU-3gFF3nLXrVOr1cqjoC3uvBQ" charset="UTF-8"></script><link rel="stylesheet" crossorigin="anonymous" href="https://gc.kis.v2.scr.kaspersky-labs.com/E3E8934C-235A-4B0E-825A-35A08381A191/abn/main.css?attr=aHR0cHM6Ly9wcGwtYWktY29kZS1pbnRlcnByZXRlci1maWxlcy5zMy5hbWF6b25hd3MuY29tL3dlYi9kaXJlY3QtZmlsZXMvMWQyMTQ4OTEwZTI3ZjI1OWJjZmQwNTc0MGU3NGRmMmYvYzY5YzU0YWUtODY2MS00M2I0LTg3MjEtYzFhZmRjZDdhZWY3LzU3OTM4YjkzLmh0bWw_cmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj1hdHRhY2htZW50JTNiJTIwZmlsZW5hbWUlM2RhdHRlbmRhbmNlLXN5c3RlbS1jb21wbGV0ZS5odG1sJTNiJTIwZmlsZW5hbWUlMmElM2RVVEYtOCUyNyUyN2F0dGVuZGFuY2Utc3lzdGVtLWNvbXBsZXRlLmh0bWwmQVdTQWNjZXNzS2V5SWQ9QVNJQTJGM0VNRVlFV0NZSVhCSVYmU2lnbmF0dXJlPVZ2ZGFpZkolMmJpdmRSSUIxZno3N1NhVjdQZ0prJTNkJngtYW16LXNlY3VyaXR5LXRva2VuPUlRb0piM0pwWjJsdVgyVmpFSnYlMmYlMmYlMmYlMmYlMmYlMmYlMmYlMmYlMmYlMmZ3RWFDWFZ6TFdWaGMzUXRNU0pITUVVQ0lRRHlubEdLd3pJMWoyb2l5aWRKcllNc09sV3Y5VUhod2VHV0FrWlRQcjFScmdJZ0tpMU1xM2VhcGdtY0U0YThzclhOb0x3N2NJWGNsUyUyZmEwWGJIckhiakZpd3E4UVFJRkJBQkdndzJPVGszTlRNek1EazNNRFVpREMwRnNjWUZ4MDZwdldWOENDck9CTmF1JTJiN0U5dzhLR0d3UzZtWUVLYWxsNExydmVQVnZUWExMZDFlelJWamp0bkVoTyUyZjNNNmIxa25CWjl2Szh0Q0NsclFtb0V2dUxkQ0FCUDJyaXJRTzZFRE8zSnpwalF2UW1uNG90WVJwMVFMcmlpZk1waW1MUkJ2NGlmY2pqZjZhQWhEZG9rJTJmVE5NejdvMkltc3FrY3drS3ZOdWVLbkIlMmJoaGZlV2NUdkFVS01NTmNWYTFRc1RrOGVEOWplVDlQQnlHQ0FqNDZYQkVHMWp0SnQ1MUNkalV1aERLZXJzQVJVZFZrUHIwVERsTWloWFhBWlElMmIxc3FnRHo1OWx5dWZXYXJhZXQ2RWxUZDlHVEM5NTYlMmZSWll2WkQ1aFhDQkJmQlpJRWRjWnNubjh0N3J6SDdqUjloZnBvRE5Wb0V4emR5MU52VU1RZTRaZkRZU2hWWUZpOG0lMmJyQUNMc1lVeUVMOUhISkJTMkVmM0t4Rm9lJTJiZSUyZk4zSW9TVUNlNXYzbFR6N1p1cWVTMmQwcm8lMmJvYWo5dkQ3b0k1dGQ0YmdxTERTJTJmSUZRbGclMmY3JTJibXZJTVA1UGolMmJKZTBKaWxNdyUyYk5mbWp5VmVQVDdvb1l1ZkFRalprQVViUkpFcU0lMmZPdjIxJTJmNGFKRGpxRjFHOG42bW9iZXZCcGxCV2x2WXNXeGo4RG1oRFJYa2FnUWwyV2pDOTBaU0d3WFZjUVdhcUZJYVVveXNZODkydnhhZmxhQTc3TmE5cDA3MnIxYkFuciUyZnY2TjhROEx4dTlRazhxRmJ3bCUyZlJkQW9ydzFMOVNBQ2klMmJTdzFzRXluQyUyZklZUFA1UmFiTXNzTDI3OVlUSkNqJTJiSGFjSlV1bWdTJTJmVFFYd0JsdHBiR0hpc21KWlVlbUt3ZWNtQnVGbnpiVGhUTVB5aGVQa3FVQmpiSk03dXI4VnZ1cE8zSiUyZkhNWFJqdHpWV0FCa0FmeDZtQ2Vyb0F6NnJqdEkwYXFoUTZQSCUyZnc1UWlqSzVwNGxGQmxJNUNRdUs4UGZ5T3pPUWpydXNibVhsaEcyNUdrRXhMJTJibVFibUh1WExNTURJaXNZR09wb0JjMEd2V2pMQUFSN1I2ZCUyYjB6SUpEbHFMYkxiZHJnRyUyZk1SRDRpSzdyJTJiMHg4d3gwUG9TbiUyZiUyYlFTRW9tQTVzalVkMkVuaktzNnVucHNIcFJlSG1NNWcweXg4dmtsUW04Umw2YXFEQzZwMWhlekJJUVhHTXRsU1ZwdWN6aiUyYlpvb2lDZzhYZyUyYkNEaGZsUHdQMUk1SVFHJTJiY3dHbWZTejFXZ3ROM0pHYTliTlN3Ylp1Z0hUMEYwQ0xpRVRiNVJ2eGpVM1VDR3BkZ1RsdVU2ZVRlU2clM2QlM2QmRXhwaXJlcz0xNzU3NTg3NTUy"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #f1f5f9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --text: #334155;
+            --text-light: #64748b;
+            --purple-bg: #8b5cf6;
+            --purple-light: #a78bfa;
+            --purple-dark: #7c3aed;
+            --info: #3b82f6;
+            --orange: #f97316;
+            --teal: #14b8a6;
+            --rose: #f43f5e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--purple-bg), var(--purple-dark));
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .dark-mode {
+            --primary: #60a5fa;
+            --secondary: #1e293b;
+            --light: #0f172a;
+            --dark: #f1f5f9;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-light: #94a3b8;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+            padding: 20px 10px;
+        }
+
+        .dark-mode .sidebar {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .school-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--purple-bg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 8px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 18px;
+            text-decoration: none;
+            color: var(--text-light);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .nav-link:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--purple-bg));
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav-link:hover:before,
+        .nav-link.active:before {
+            left: 0;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .nav-text {
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: 15px;
+        }
+
+        /* Toggle Button */
+        .sidebar-toggle {
+            position: absolute;
+            top: 20px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        /* Enhanced Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 25px 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .dark-mode .header {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .header-left h1 {
+            color: var(--dark);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+            transition: left 0.3s ease;
+        }
+
+        .btn:hover:before {
+            left: 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--purple-bg));
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), var(--teal));
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Enhanced Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .stat-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--purple-bg));
+        }
+
+        .dark-mode .stat-card {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--primary), var(--purple-bg));
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        .stat-icon.danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        /* Enhanced Table Styles */
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+
+        .dark-mode .table-container {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .table-header {
+            padding: 25px 30px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box {
+            position: relative;
+            margin: 20px 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--light);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            background: var(--secondary);
+            font-weight: 600;
+            color: var(--dark);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-present {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-absent {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .status-late {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-excused {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        /* Enhanced Forms */
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 30px;
+        }
+
+        .dark-mode .form-container {
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--light);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* WhatsApp Integration */
+        .whatsapp-section {
+            background: rgba(37, 211, 102, 0.1);
+            border: 2px solid #25d366;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .whatsapp-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .whatsapp-icon {
+            width: 50px;
+            height: 50px;
+            background: #25d366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text);
+        }
+
+        .theme-toggle:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .dark-mode .modal-content {
+            background: rgba(30, 41, 59, 0.98);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--success), #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, var(--info), var(--teal));
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, var(--warning), #d97706);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Photo placeholders */
+        .student-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            background: var(--primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hidden class for page navigation */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* File input styling */
+        .file-input {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .file-input input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: var(--info);
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Enhanced Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-left" id="toggle-icon"></i>
+            </button>
+            
+            <div class="logo-container">
+                <div class="school-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <h3>AttendanceHUB</h3>
+                    <p style="font-size: 12px; color: var(--text-light);">v2.0 Complete</p>
+                </div>
+            </div>
+
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active" onclick="showPage('dashboard')">
+                            <i class="fas fa-chart-pie"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('students')">
+                            <i class="fas fa-users"></i>
+                            <span class="nav-text">Students</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('teachers')">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span class="nav-text">Teachers</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('classes')">
+                            <i class="fas fa-school"></i>
+                            <span class="nav-text">Classes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('take-attendance')">
+                            <i class="fas fa-user-check"></i>
+                            <span class="nav-text">Take Attendance</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('whatsapp')">
+                            <i class="fab fa-whatsapp"></i>
+                            <span class="nav-text">WhatsApp</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('reports')">
+                            <i class="fas fa-chart-bar"></i>
+                            <span class="nav-text">Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('analytics')">
+                            <i class="fas fa-analytics"></i>
+                            <span class="nav-text">Analytics</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('backup')">
+                            <i class="fas fa-database"></i>
+                            <span class="nav-text">Backup & Restore</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="showPage('settings')">
+                            <i class="fas fa-cog"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Enhanced Main Content -->
+        <main class="main-content">
+            <!-- Enhanced Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1>Student Attendance System</h1>
+                    <div class="header-subtitle">
+                        <i class="fas fa-calendar"></i>
+                        <span id="current-date"></span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-success" onclick="showPage('take-attendance')">
+                        <i class="fas fa-user-check"></i>
+                        Take Attendance
+                    </button>
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <!-- Enhanced Dashboard Stats -->
+                <div class="dashboard-grid">
+                    <div class="stat-card" onclick="showPage('students')">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-number" id="total-students">0</div>
+                                <div class="stat-label">Total Students</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+5 this month</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon primary">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-number" id="present-today">0</div>
+                                <div class="stat-label">Present Today</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span id="attendance-rate">0%</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon success">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-number" id="absent-today">0</div>
+                                <div class="stat-label">Absent Today</div>
+                                <div class="stat-change negative">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>3 fewer than yesterday</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon danger">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" onclick="showPage('teachers')">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-number" id="total-teachers">0</div>
+                                <div class="stat-label">Total Teachers</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Active</span>
+                                </div>
+                            </div>
+                            <div class="stat-icon warning">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Recent Activity</h3>
+                        <div class="table-actions">
+                            <button class="btn btn-info" onclick="refreshActivity()">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding: 30px;">
+                        <div id="recent-activity">
+                            <p style="text-align: center; color: var(--text-light); padding: 40px;">
+                                <i class="fas fa-clock" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                                Loading recent activity...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Management Page -->
+            <div id="students" class="page">
+                <div class="form-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--dark);">
+                            <i class="fas fa-users"></i>
+                            Student Management
+                        </h2>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-success" onclick="showAddStudentForm()">
+                                <i class="fas fa-user-plus"></i>
+                                Add Student
+                            </button>
+                            <button class="btn btn-info" onclick="importStudents()">
+                                <i class="fas fa-upload"></i>
+                                Import CSV
+                            </button>
+                            <button class="btn btn-warning" onclick="exportStudents()">
+                                <i class="fas fa-download"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add Student Form -->
+                    <div id="add-student-form" style="display: none; margin-bottom: 30px; padding: 25px; background: rgba(99, 102, 241, 0.05); border-radius: 15px; border: 2px solid var(--primary);">
+                        <h3 style="margin-bottom: 20px; color: var(--primary);">
+                            <i class="fas fa-user-plus"></i>
+                            Add New Student
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Student ID</label>
+                                <input type="text" class="form-input" id="student-id" placeholder="Enter student ID">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-input" id="student-name" placeholder="Enter full name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" id="student-class">
+                                    <option value="">Select Class</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="student-email" placeholder="Enter email address">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-input" id="student-phone" placeholder="Enter phone number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Parent Phone</label>
+                                <input type="tel" class="form-input" id="parent-phone" placeholder="Enter parent WhatsApp number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-input" id="student-dob">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Address</label>
+                                <input type="text" class="form-input" id="student-address" placeholder="Enter address">
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; display: flex; gap: 15px;">
+                            <button class="btn btn-success" onclick="addStudent()">
+                                <i class="fas fa-save"></i>
+                                Save Student
+                            </button>
+                            <button class="btn btn-danger" onclick="hideAddStudentForm()">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text" class="search-input" placeholder="Search students by name, ID, or class..." id="students-search" oninput="searchStudents()">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Phone</th>
+                                    <th>Parent Phone</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table-body">
+                                <!-- Student rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teachers Management Page -->
+            <div id="teachers" class="page">
+                <div class="form-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--dark);">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            Teacher Management
+                        </h2>
+                        <div style="display: flex; gap: 15px;">
+                            <button class="btn btn-success" onclick="showAddTeacherForm()">
+                                <i class="fas fa-user-plus"></i>
+                                Add Teacher
+                            </button>
+                            <button class="btn btn-info" onclick="importTeachers()">
+                                <i class="fas fa-upload"></i>
+                                Import CSV
+                            </button>
+                            <button class="btn btn-warning" onclick="exportTeachers()">
+                                <i class="fas fa-download"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add Teacher Form -->
+                    <div id="add-teacher-form" style="display: none; margin-bottom: 30px; padding: 25px; background: rgba(16, 185, 129, 0.05); border-radius: 15px; border: 2px solid var(--success);">
+                        <h3 style="margin-bottom: 20px; color: var(--success);">
+                            <i class="fas fa-user-plus"></i>
+                            Add New Teacher
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Teacher ID</label>
+                                <input type="text" class="form-input" id="teacher-id" placeholder="Enter teacher ID">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-input" id="teacher-name" placeholder="Enter full name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Subject</label>
+                                <input type="text" class="form-input" id="teacher-subject" placeholder="Enter subject">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="teacher-email" placeholder="Enter email address">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-input" id="teacher-phone" placeholder="Enter phone number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hire Date</label>
+                                <input type="date" class="form-input" id="teacher-hire-date">
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; display: flex; gap: 15px;">
+                            <button class="btn btn-success" onclick="addTeacher()">
+                                <i class="fas fa-save"></i>
+                                Save Teacher
+                            </button>
+                            <button class="btn btn-danger" onclick="hideAddTeacherForm()">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Teacher ID</th>
+                                    <th>Name</th>
+                                    <th>Subject</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Hire Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachers-table-body">
+                                <!-- Teacher rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classes Management Page -->
+            <div id="classes" class="page">
+                <div class="form-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--dark);">
+                            <i class="fas fa-school"></i>
+                            Class Management
+                        </h2>
+                        <button class="btn btn-success" onclick="showAddClassForm()">
+                            <i class="fas fa-plus"></i>
+                            Add Class
+                        </button>
+                    </div>
+
+                    <!-- Add Class Form -->
+                    <div id="add-class-form" style="display: none; margin-bottom: 30px; padding: 25px; background: rgba(245, 158, 11, 0.05); border-radius: 15px; border: 2px solid var(--warning);">
+                        <h3 style="margin-bottom: 20px; color: var(--warning);">
+                            <i class="fas fa-plus"></i>
+                            Add New Class
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Class Name</label>
+                                <input type="text" class="form-input" id="class-name" placeholder="e.g., Grade 1A">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Class Teacher</label>
+                                <select class="form-select" id="class-teacher">
+                                    <option value="">Select Teacher</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Room Number</label>
+                                <input type="text" class="form-input" id="class-room" placeholder="Enter room number">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Capacity</label>
+                                <input type="number" class="form-input" id="class-capacity" placeholder="Max students">
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; display: flex; gap: 15px;">
+                            <button class="btn btn-success" onclick="addClass()">
+                                <i class="fas fa-save"></i>
+                                Save Class
+                            </button>
+                            <button class="btn btn-danger" onclick="hideAddClassForm()">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Class Name</th>
+                                    <th>Teacher</th>
+                                    <th>Room</th>
+                                    <th>Capacity</th>
+                                    <th>Current Students</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classes-table-body">
+                                <!-- Class rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WhatsApp Integration Page -->
+            <div id="whatsapp" class="page">
+                <div class="form-container">
+                    <div class="whatsapp-section">
+                        <div class="whatsapp-header">
+                            <div class="whatsapp-icon">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <div>
+                                <h2 style="color: #25d366; margin: 0;">WhatsApp Integration</h2>
+                                <p style="color: var(--text-light); margin: 5px 0 0 0;">Send automatic messages to parents when students are marked absent</p>
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Settings -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" id="whatsapp-enabled" onchange="toggleWhatsAppIntegration()">
+                                    Enable WhatsApp Notifications
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" id="auto-send-absent" checked>
+                                    Auto-send when student marked absent
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Message Templates -->
+                        <h3 style="color: #25d366; margin: 30px 0 15px 0;">Message Templates</h3>
+                        <div class="form-group">
+                            <label class="form-label">Absent Message Template</label>
+                            <textarea class="form-textarea" id="absent-template" rows="4" placeholder="Enter message template...">
+Hello {parent_name},
+
+Your child {student_name} (ID: {student_id}) was marked absent today ({date}).
+
+If this is unexpected, please contact the school.
+
+Best regards,
+{school_name}
+                            </textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Late Message Template</label>
+                            <textarea class="form-textarea" id="late-template" rows="4" placeholder="Enter message template...">
+Hello {parent_name},
+
+Your child {student_name} (ID: {student_id}) arrived late today ({date}) at {time}.
+
+Best regards,
+{school_name}
+                            </textarea>
+                        </div>
+
+                        <button class="btn btn-success" onclick="saveWhatsAppSettings()">
+                            <i class="fas fa-save"></i>
+                            Save WhatsApp Settings
+                        </button>
+                    </div>
+
+                    <!-- Send Custom Message -->
+                    <div style="margin-top: 30px; padding: 25px; background: rgba(99, 102, 241, 0.05); border-radius: 15px;">
+                        <h3 style="margin-bottom: 20px; color: var(--primary);">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Custom Message
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Select Recipients</label>
+                                <select class="form-select" id="message-recipients">
+                                    <option value="all">All Parents</option>
+                                    <option value="class">Specific Class</option>
+                                    <option value="absent">Parents of Absent Students</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="class-selector" style="display: none;">
+                                <label class="form-label">Select Class</label>
+                                <select class="form-select" id="message-class">
+                                    <option value="">Select Class</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-textarea" id="custom-message" rows="4" placeholder="Enter your message..."></textarea>
+                        </div>
+                        <button class="btn btn-success" onclick="sendCustomWhatsAppMessage()">
+                            <i class="fab fa-whatsapp"></i>
+                            Send Message
+                        </button>
+                    </div>
+
+                    <!-- Message History -->
+                    <div style="margin-top: 30px;">
+                        <h3 style="margin-bottom: 20px; color: var(--dark);">Message History</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date/Time</th>
+                                        <th>Student</th>
+                                        <th>Parent Phone</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="message-history-body">
+                                    <!-- Message history will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Take Attendance Page -->
+            <div id="take-attendance" class="page">
+                <div class="form-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--dark);">
+                            <i class="fas fa-user-check"></i>
+                            Take Attendance
+                        </h2>
+                        <div style="display: flex; gap: 15px;">
+                            <input type="date" class="form-input" id="attendance-date" style="width: auto;" onchange="loadAttendanceForDate()">
+                            <select class="form-select" id="attendance-class" style="width: auto;" onchange="loadAttendanceForClass()">
+                                <option value="">All Classes</option>
+                            </select>
+                            <button class="btn btn-success" onclick="markAllPresent()">
+                                <i class="fas fa-check-double"></i>
+                                Mark All Present
+                            </button>
+                            <button class="btn btn-primary" onclick="saveAttendance()">
+                                <i class="fas fa-save"></i>
+                                Save Attendance
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-table-body">
+                                <!-- Attendance rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="reports" class="page">
+                <div class="form-container">
+                    <h2 style="margin-bottom: 25px; color: var(--dark);">
+                        <i class="fas fa-chart-bar"></i>
+                        Attendance Reports
+                    </h2>
+
+                    <!-- Report Filters -->
+                    <div class="form-grid" style="margin-bottom: 30px;">
+                        <div class="form-group">
+                            <label class="form-label">Report Type</label>
+                            <select class="form-select" id="report-type">
+                                <option value="daily">Daily Report</option>
+                                <option value="weekly">Weekly Report</option>
+                                <option value="monthly">Monthly Report</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Class Filter</label>
+                            <select class="form-select" id="report-class">
+                                <option value="">All Classes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-input" id="report-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-input" id="report-end-date">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+                        <button class="btn btn-primary" onclick="generateReport()">
+                            <i class="fas fa-chart-line"></i>
+                            Generate Report
+                        </button>
+                        <button class="btn btn-success" onclick="exportReportPDF()">
+                            <i class="fas fa-file-pdf"></i>
+                            Export PDF
+                        </button>
+                        <button class="btn btn-info" onclick="exportReportExcel()">
+                            <i class="fas fa-file-excel"></i>
+                            Export Excel
+                        </button>
+                    </div>
+
+                    <!-- Report Results -->
+                    <div id="report-results" class="table-container" style="display: none;">
+                        <div class="table-header">
+                            <h3 class="table-title">Report Results</h3>
+                        </div>
+                        <div style="padding: 30px;" id="report-content">
+                            <!-- Report results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics" class="page">
+                <div class="form-container">
+                    <h2 style="margin-bottom: 25px; color: var(--dark);">
+                        <i class="fas fa-analytics"></i>
+                        Analytics Dashboard
+                    </h2>
+                    <p style="text-align: center; padding: 40px; color: var(--text-light);">
+                        Analytics charts and insights will be displayed here.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Backup & Restore Page -->
+            <div id="backup" class="page">
+                <div class="form-container">
+                    <h2 style="margin-bottom: 25px; color: var(--dark);">
+                        <i class="fas fa-database"></i>
+                        Backup & Restore
+                    </h2>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+                        <!-- Create Backup -->
+                        <div style="padding: 25px; background: rgba(16, 185, 129, 0.05); border-radius: 15px; border: 2px solid var(--success);">
+                            <h3 style="color: var(--success); margin-bottom: 15px;">
+                                <i class="fas fa-download"></i>
+                                Create Backup
+                            </h3>
+                            <p style="color: var(--text-light); margin-bottom: 20px;">
+                                Create a backup of all your data including students, teachers, classes, and attendance records.
+                            </p>
+                            <button class="btn btn-success" onclick="createBackup()">
+                                <i class="fas fa-save"></i>
+                                Download Backup
+                            </button>
+                        </div>
+
+                        <!-- Restore Data -->
+                        <div style="padding: 25px; background: rgba(245, 158, 11, 0.05); border-radius: 15px; border: 2px solid var(--warning);">
+                            <h3 style="color: var(--warning); margin-bottom: 15px;">
+                                <i class="fas fa-upload"></i>
+                                Restore Data
+                            </h3>
+                            <p style="color: var(--text-light); margin-bottom: 20px;">
+                                Restore your data from a previously created backup file.
+                            </p>
+                            <div class="file-input">
+                                <input type="file" id="restore-file" accept=".json">
+                                <label for="restore-file" class="file-input-label">
+                                    <i class="fas fa-file-upload"></i>
+                                    Choose Backup File
+                                </label>
+                            </div>
+                            <button class="btn btn-warning" onclick="restoreBackup()" style="margin-top: 10px; width: 100%;">
+                                <i class="fas fa-undo"></i>
+                                Restore Backup
+                            </button>
+                        </div>
+
+                        <!-- Auto Backup -->
+                        <div style="padding: 25px; background: rgba(59, 130, 246, 0.05); border-radius: 15px; border: 2px solid var(--info);">
+                            <h3 style="color: var(--info); margin-bottom: 15px;">
+                                <i class="fas fa-clock"></i>
+                                Auto Backup
+                            </h3>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" id="auto-backup-enabled" onchange="toggleAutoBackup()">
+                                    Enable automatic backup
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Backup Frequency</label>
+                                <select class="form-select" id="backup-frequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-info" onclick="saveBackupSettings()">
+                                <i class="fas fa-save"></i>
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Backup History -->
+                    <div style="margin-top: 30px;">
+                        <h3 style="margin-bottom: 20px; color: var(--dark);">Backup History</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backup-history-body">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">
+                                            No backup history available
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="form-container">
+                    <h2 style="margin-bottom: 25px; color: var(--dark);">
+                        <i class="fas fa-cog"></i>
+                        System Settings
+                    </h2>
+                    
+                    <!-- School Information -->
+                    <div style="margin-bottom: 30px; padding: 25px; background: rgba(99, 102, 241, 0.05); border-radius: 15px;">
+                        <h3 style="margin-bottom: 20px; color: var(--primary);">
+                            <i class="fas fa-school"></i>
+                            School Information
+                        </h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">School Name</label>
+                                <input type="text" class="form-input" id="school-name" value="AttendanceHUB Academy">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">School Address</label>
+                                <input type="text" class="form-input" id="school-address" value="123 Education Lane">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contact Phone</label>
+                                <input type="tel" class="form-input" id="school-phone" value="(555) 123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contact Email</label>
+                                <input type="email" class="form-input" id="school-email" value="admin@attendancehub.edu">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i>
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="import-students-file" accept=".csv" style="display: none;" onchange="handleStudentImport(this)">
+    <input type="file" id="import-teachers-file" accept=".csv" style="display: none;" onchange="handleTeacherImport(this)">
+
+    <!-- Notification -->
+    <div class="notification" id="notification" style="display: none;"></div>
+
+    <script>
+        // Global Variables
+        let students = [];
+        let teachers = [];
+        let classes = [];
+        let attendanceRecords = {};
+        let whatsappMessages = [];
+        let currentDate = new Date().toISOString().split('T')[0];
+        let isDarkMode = false;
+        let whatsappEnabled = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            updateCurrentDate();
+            loadFromLocalStorage();
+            loadSampleData(); // Load sample data if no data exists
+            populateAllDropdowns();
+            loadAllTables();
+            updateDashboardStats();
+            loadRecentActivity();
+            
+            // Set current date for attendance
+            document.getElementById('attendance-date').value = currentDate;
+        }
+
+        // Load sample data for demonstration
+        function loadSampleData() {
+            if (students.length === 0) {
+                const sampleStudents = [
+                    {
+                        id: 'STU001',
+                        name: 'Emma Johnson',
+                        class: 'Grade 1A',
+                        email: 'emma.johnson@email.com',
+                        phone: '(555) 123-4567',
+                        parentPhone: '+1234567890',
+                        dob: '2016-03-15',
+                        address: '123 Main St',
+                        status: 'active'
+                    },
+                    {
+                        id: 'STU002',
+                        name: 'Liam Davis',
+                        class: 'Grade 1A',
+                        email: 'liam.davis@email.com',
+                        phone: '(555) 234-5678',
+                        parentPhone: '+1234567891',
+                        dob: '2016-07-22',
+                        address: '456 Oak Ave',
+                        status: 'active'
+                    },
+                    {
+                        id: 'STU003',
+                        name: 'Sophia Miller',
+                        class: 'Grade 1B',
+                        email: 'sophia.miller@email.com',
+                        phone: '(555) 345-6789',
+                        parentPhone: '+1234567892',
+                        dob: '2016-11-08',
+                        address: '789 Pine Rd',
+                        status: 'active'
+                    }
+                ];
+                students = sampleStudents;
+            }
+
+            if (teachers.length === 0) {
+                const sampleTeachers = [
+                    {
+                        id: 'TCH001',
+                        name: 'Mrs. Sarah Wilson',
+                        subject: 'Mathematics',
+                        email: 'sarah.wilson@school.edu',
+                        phone: '(555) 111-2222',
+                        hireDate: '2020-08-15',
+                        status: 'active'
+                    },
+                    {
+                        id: 'TCH002',
+                        name: 'Mr. John Smith',
+                        subject: 'English',
+                        email: 'john.smith@school.edu',
+                        phone: '(555) 333-4444',
+                        hireDate: '2019-09-01',
+                        status: 'active'
+                    }
+                ];
+                teachers = sampleTeachers;
+            }
+
+            if (classes.length === 0) {
+                const sampleClasses = [
+                    {
+                        name: 'Grade 1A',
+                        teacher: 'Mrs. Sarah Wilson',
+                        room: 'Room 101',
+                        capacity: 25,
+                        currentStudents: 2,
+                        status: 'active'
+                    },
+                    {
+                        name: 'Grade 1B',
+                        teacher: 'Mr. John Smith',
+                        room: 'Room 102',
+                        capacity: 25,
+                        currentStudents: 1,
+                        status: 'active'
+                    }
+                ];
+                classes = sampleClasses;
+            }
+
+            saveToLocalStorage();
+            generateSampleAttendance();
+        }
+
+        function generateSampleAttendance() {
+            const today = new Date();
+            
+            // Generate attendance for the last 7 days
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                
+                if (!attendanceRecords[dateStr]) {
+                    attendanceRecords[dateStr] = {};
+                }
+                
+                students.forEach(student => {
+                    const random = Math.random();
+                    let status = 'present';
+                    let time = '08:' + Math.floor(Math.random() * 30).toString().padStart(2, '0');
+                    
+                    if (random < 0.05) {
+                        status = 'absent';
+                        time = '';
+                    } else if (random < 0.1) {
+                        status = 'late';
+                        time = '08:' + (30 + Math.floor(Math.random() * 30)).toString().padStart(2, '0');
+                    }
+                    
+                    attendanceRecords[dateStr][student.id] = {
+                        status: status,
+                        time: time,
+                        notes: status === 'late' ? 'Traffic delay' : '',
+                        recordedAt: new Date().toISOString()
+                    };
+                });
+            }
+            
+            saveToLocalStorage();
+        }
+
+        // Navigation Functions
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.closest('.nav-link').classList.add('active');
+            
+            // Load page-specific content
+            if (pageId === 'students') {
+                loadStudentsTable();
+            } else if (pageId === 'teachers') {
+                loadTeachersTable();
+            } else if (pageId === 'classes') {
+                loadClassesTable();
+            } else if (pageId === 'take-attendance') {
+                loadAttendanceTable();
+            } else if (pageId === 'dashboard') {
+                updateDashboardStats();
+                loadRecentActivity();
+            } else if (pageId === 'whatsapp') {
+                loadMessageHistory();
+            }
+        }
+
+        // Sidebar Functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.className = 'fas fa-chevron-right';
+            } else {
+                toggleIcon.className = 'fas fa-chevron-left';
+            }
+        }
+
+        // Theme Functions
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            body.classList.toggle('dark-mode');
+            isDarkMode = body.classList.contains('dark-mode');
+            
+            if (isDarkMode) {
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                themeIcon.className = 'fas fa-moon';
+            }
+        }
+
+        // Date Functions
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Dashboard Functions
+        function updateDashboardStats() {
+            const totalStudents = students.length;
+            const totalTeachers = teachers.length;
+            const todayRecords = attendanceRecords[currentDate] || {};
+            
+            let presentToday = 0;
+            let absentToday = 0;
+            let lateToday = 0;
+            
+            Object.values(todayRecords).forEach(record => {
+                if (record.status === 'present') presentToday++;
+                else if (record.status === 'absent') absentToday++;
+                else if (record.status === 'late') lateToday++;
+            });
+            
+            document.getElementById('total-students').textContent = totalStudents;
+            document.getElementById('total-teachers').textContent = totalTeachers;
+            document.getElementById('present-today').textContent = presentToday;
+            document.getElementById('absent-today').textContent = absentToday;
+            
+            const attendanceRate = totalStudents > 0 ? Math.round((presentToday / totalStudents) * 100) : 0;
+            document.getElementById('attendance-rate').textContent = attendanceRate + '%';
+        }
+
+        // Student Management Functions
+        function showAddStudentForm() {
+            document.getElementById('add-student-form').style.display = 'block';
+        }
+
+        function hideAddStudentForm() {
+            document.getElementById('add-student-form').style.display = 'none';
+            clearStudentForm();
+        }
+
+        function clearStudentForm() {
+            document.getElementById('student-id').value = '';
+            document.getElementById('student-name').value = '';
+            document.getElementById('student-class').value = '';
+            document.getElementById('student-email').value = '';
+            document.getElementById('student-phone').value = '';
+            document.getElementById('parent-phone').value = '';
+            document.getElementById('student-dob').value = '';
+            document.getElementById('student-address').value = '';
+        }
+
+        function addStudent() {
+            const student = {
+                id: document.getElementById('student-id').value || generateStudentId(),
+                name: document.getElementById('student-name').value,
+                class: document.getElementById('student-class').value,
+                email: document.getElementById('student-email').value,
+                phone: document.getElementById('student-phone').value,
+                parentPhone: document.getElementById('parent-phone').value,
+                dob: document.getElementById('student-dob').value,
+                address: document.getElementById('student-address').value,
+                status: 'active'
+            };
+
+            // Validation
+            if (!student.name || !student.class) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Check for duplicate ID
+            if (students.some(s => s.id === student.id)) {
+                showNotification('Student ID already exists', 'error');
+                return;
+            }
+
+            students.push(student);
+            updateClassStudentCount(student.class, 1);
+            saveToLocalStorage();
+            loadStudentsTable();
+            hideAddStudentForm();
+            showNotification('Student added successfully', 'success');
+            updateDashboardStats();
+            addRecentActivity(`Added student: ${student.name}`);
+        }
+
+        function generateStudentId() {
+            const prefix = 'STU';
+            const number = (students.length + 1).toString().padStart(3, '0');
+            return prefix + number;
+        }
+
+        function editStudent(index) {
+            const student = students[index];
+            if (student) {
+                // Fill form with student data
+                document.getElementById('student-id').value = student.id;
+                document.getElementById('student-name').value = student.name;
+                document.getElementById('student-class').value = student.class;
+                document.getElementById('student-email').value = student.email || '';
+                document.getElementById('student-phone').value = student.phone || '';
+                document.getElementById('parent-phone').value = student.parentPhone || '';
+                document.getElementById('student-dob').value = student.dob || '';
+                document.getElementById('student-address').value = student.address || '';
+                
+                showAddStudentForm();
+                
+                // Remove the student temporarily for editing
+                students.splice(index, 1);
+                saveToLocalStorage();
+            }
+        }
+
+        function deleteStudent(index) {
+            if (confirm('Are you sure you want to delete this student?')) {
+                const student = students[index];
+                const studentId = student.id;
+                
+                // Remove student
+                students.splice(index, 1);
+                updateClassStudentCount(student.class, -1);
+                
+                // Remove attendance records for this student
+                Object.keys(attendanceRecords).forEach(date => {
+                    if (attendanceRecords[date][studentId]) {
+                        delete attendanceRecords[date][studentId];
+                    }
+                });
+                
+                saveToLocalStorage();
+                loadStudentsTable();
+                updateDashboardStats();
+                showNotification('Student deleted successfully', 'success');
+                addRecentActivity(`Deleted student: ${student.name}`);
+            }
+        }
+
+        function loadStudentsTable() {
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-light);">No students found. Click "Add Student" to get started.</td></tr>';
+                return;
+            }
+
+            students.forEach((student, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>
+                        <div class="student-photo">
+                            ${student.name.charAt(0).toUpperCase()}
+                        </div>
+                    </td>
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td>${student.class}</td>
+                    <td>${student.phone || '-'}</td>
+                    <td>${student.parentPhone || '-'}</td>
+                    <td><span class="status-badge status-active">${student.status}</span></td>
+                    <td>
+                        <button class="btn btn-info" style="padding: 8px 12px; font-size: 12px; margin-right: 5px;" onclick="editStudent(${index})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="deleteStudent(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        function searchStudents() {
+            const searchTerm = document.getElementById('students-search').value.toLowerCase();
+            const rows = document.querySelectorAll('#students-table-body tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Teacher Management Functions
+        function showAddTeacherForm() {
+            document.getElementById('add-teacher-form').style.display = 'block';
+        }
+
+        function hideAddTeacherForm() {
+            document.getElementById('add-teacher-form').style.display = 'none';
+            clearTeacherForm();
+        }
+
+        function clearTeacherForm() {
+            document.getElementById('teacher-id').value = '';
+            document.getElementById('teacher-name').value = '';
+            document.getElementById('teacher-subject').value = '';
+            document.getElementById('teacher-email').value = '';
+            document.getElementById('teacher-phone').value = '';
+            document.getElementById('teacher-hire-date').value = '';
+        }
+
+        function addTeacher() {
+            const teacher = {
+                id: document.getElementById('teacher-id').value || generateTeacherId(),
+                name: document.getElementById('teacher-name').value,
+                subject: document.getElementById('teacher-subject').value,
+                email: document.getElementById('teacher-email').value,
+                phone: document.getElementById('teacher-phone').value,
+                hireDate: document.getElementById('teacher-hire-date').value,
+                status: 'active'
+            };
+
+            // Validation
+            if (!teacher.name || !teacher.subject) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Check for duplicate ID
+            if (teachers.some(t => t.id === teacher.id)) {
+                showNotification('Teacher ID already exists', 'error');
+                return;
+            }
+
+            teachers.push(teacher);
+            saveToLocalStorage();
+            loadTeachersTable();
+            populateAllDropdowns();
+            hideAddTeacherForm();
+            showNotification('Teacher added successfully', 'success');
+            updateDashboardStats();
+            addRecentActivity(`Added teacher: ${teacher.name}`);
+        }
+
+        function generateTeacherId() {
+            const prefix = 'TCH';
+            const number = (teachers.length + 1).toString().padStart(3, '0');
+            return prefix + number;
+        }
+
+        function deleteTeacher(index) {
+            if (confirm('Are you sure you want to delete this teacher?')) {
+                const teacher = teachers[index];
+                teachers.splice(index, 1);
+                
+                saveToLocalStorage();
+                loadTeachersTable();
+                populateAllDropdowns();
+                updateDashboardStats();
+                showNotification('Teacher deleted successfully', 'success');
+                addRecentActivity(`Deleted teacher: ${teacher.name}`);
+            }
+        }
+
+        function loadTeachersTable() {
+            const tbody = document.getElementById('teachers-table-body');
+            tbody.innerHTML = '';
+
+            if (teachers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-light);">No teachers found. Click "Add Teacher" to get started.</td></tr>';
+                return;
+            }
+
+            teachers.forEach((teacher, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${teacher.id}</td>
+                    <td>${teacher.name}</td>
+                    <td>${teacher.subject}</td>
+                    <td>${teacher.email}</td>
+                    <td>${teacher.phone}</td>
+                    <td>${teacher.hireDate || '-'}</td>
+                    <td><span class="status-badge status-active">${teacher.status}</span></td>
+                    <td>
+                        <button class="btn btn-info" style="padding: 8px 12px; font-size: 12px; margin-right: 5px;" onclick="editTeacher(${index})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="deleteTeacher(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Class Management Functions
+        function showAddClassForm() {
+            document.getElementById('add-class-form').style.display = 'block';
+            populateClassTeachers();
+        }
+
+        function hideAddClassForm() {
+            document.getElementById('add-class-form').style.display = 'none';
+            clearClassForm();
+        }
+
+        function clearClassForm() {
+            document.getElementById('class-name').value = '';
+            document.getElementById('class-teacher').value = '';
+            document.getElementById('class-room').value = '';
+            document.getElementById('class-capacity').value = '';
+        }
+
+        function addClass() {
+            const className = document.getElementById('class-name').value;
+            const classTeacher = document.getElementById('class-teacher').value;
+            const classRoom = document.getElementById('class-room').value;
+            const classCapacity = document.getElementById('class-capacity').value;
+
+            if (!className || !classTeacher) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (classes.some(c => c.name === className)) {
+                showNotification('Class name already exists', 'error');
+                return;
+            }
+
+            const newClass = {
+                name: className,
+                teacher: classTeacher,
+                room: classRoom,
+                capacity: parseInt(classCapacity) || 30,
+                currentStudents: 0,
+                status: 'active'
+            };
+
+            classes.push(newClass);
+            saveToLocalStorage();
+            loadClassesTable();
+            populateAllDropdowns();
+            hideAddClassForm();
+            showNotification('Class added successfully', 'success');
+            addRecentActivity(`Added class: ${newClass.name}`);
+        }
+
+        function deleteClass(index) {
+            if (confirm('Are you sure you want to delete this class?')) {
+                const classItem = classes[index];
+                classes.splice(index, 1);
+                
+                saveToLocalStorage();
+                loadClassesTable();
+                populateAllDropdowns();
+                showNotification('Class deleted successfully', 'success');
+                addRecentActivity(`Deleted class: ${classItem.name}`);
+            }
+        }
+
+        function loadClassesTable() {
+            const tbody = document.getElementById('classes-table-body');
+            tbody.innerHTML = '';
+
+            if (classes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No classes found. Click "Add Class" to get started.</td></tr>';
+                return;
+            }
+
+            classes.forEach((classItem, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${classItem.name}</td>
+                    <td>${classItem.teacher}</td>
+                    <td>${classItem.room}</td>
+                    <td>${classItem.capacity}</td>
+                    <td>${classItem.currentStudents}</td>
+                    <td><span class="status-badge status-active">${classItem.status}</span></td>
+                    <td>
+                        <button class="btn btn-info" style="padding: 8px 12px; font-size: 12px; margin-right: 5px;" onclick="editClass(${index})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="deleteClass(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        function updateClassStudentCount(className, change) {
+            const classItem = classes.find(c => c.name === className);
+            if (classItem) {
+                classItem.currentStudents += change;
+                if (classItem.currentStudents < 0) classItem.currentStudents = 0;
+                saveToLocalStorage();
+                loadClassesTable();
+            }
+        }
+
+        // WhatsApp Functions
+        function toggleWhatsAppIntegration() {
+            whatsappEnabled = document.getElementById('whatsapp-enabled').checked;
+            showNotification(`WhatsApp integration ${whatsappEnabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function saveWhatsAppSettings() {
+            const settings = {
+                enabled: document.getElementById('whatsapp-enabled').checked,
+                autoSendAbsent: document.getElementById('auto-send-absent').checked,
+                absentTemplate: document.getElementById('absent-template').value,
+                lateTemplate: document.getElementById('late-template').value
+            };
+            
+            localStorage.setItem('whatsappSettings', JSON.stringify(settings));
+            showNotification('WhatsApp settings saved successfully', 'success');
+        }
+
+        function sendWhatsAppMessage(studentId, messageType) {
+            if (!whatsappEnabled) return;
+
+            const student = students.find(s => s.id === studentId);
+            if (!student || !student.parentPhone) return;
+
+            const settings = JSON.parse(localStorage.getItem('whatsappSettings')) || {};
+            let template = messageType === 'absent' ? settings.absentTemplate : settings.lateTemplate;
+            
+            if (!template) {
+                template = `Hello, your child ${student.name} was marked ${messageType} today.`;
+            }
+
+            // Replace template variables
+            const message = template
+                .replace('{student_name}', student.name)
+                .replace('{student_id}', student.id)
+                .replace('{parent_name}', 'Parent')
+                .replace('{date}', currentDate)
+                .replace('{school_name}', 'AttendanceHUB Academy');
+
+            // Create WhatsApp URL
+            const whatsappUrl = `https://wa.me/${student.parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+            
+            // Open WhatsApp
+            window.open(whatsappUrl, '_blank');
+            
+            // Log message
+            const messageLog = {
+                date: new Date().toISOString(),
+                student: student.name,
+                parentPhone: student.parentPhone,
+                type: messageType,
+                status: 'sent'
+            };
+            
+            whatsappMessages.push(messageLog);
+            saveToLocalStorage();
+            loadMessageHistory();
+            
+            showNotification(`WhatsApp message sent to ${student.name}'s parent`, 'success');
+        }
+
+        function sendCustomWhatsAppMessage() {
+            const recipients = document.getElementById('message-recipients').value;
+            const message = document.getElementById('custom-message').value;
+            
+            if (!message.trim()) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+            
+            let targetStudents = [];
+            
+            if (recipients === 'all') {
+                targetStudents = students;
+            } else if (recipients === 'class') {
+                const selectedClass = document.getElementById('message-class').value;
+                targetStudents = students.filter(s => s.class === selectedClass);
+            } else if (recipients === 'absent') {
+                const todayRecords = attendanceRecords[currentDate] || {};
+                targetStudents = students.filter(s => 
+                    todayRecords[s.id] && todayRecords[s.id].status === 'absent'
+                );
+            }
+            
+            targetStudents.forEach(student => {
+                if (student.parentPhone) {
+                    const whatsappUrl = `https://wa.me/${student.parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+                    setTimeout(() => {
+                        window.open(whatsappUrl, '_blank');
+                    }, 1000);
+                }
+            });
+            
+            showNotification(`Message will be sent to ${targetStudents.length} parents`, 'success');
+        }
+
+        function loadMessageHistory() {
+            const tbody = document.getElementById('message-history-body');
+            tbody.innerHTML = '';
+            
+            if (whatsappMessages.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No messages sent yet</td></tr>';
+                return;
+            }
+            
+            whatsappMessages.slice(-10).reverse().forEach(msg => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(msg.date).toLocaleString()}</td>
+                    <td>${msg.student}</td>
+                    <td>${msg.parentPhone}</td>
+                    <td><span class="status-badge status-${msg.type === 'absent' ? 'absent' : 'late'}">${msg.type}</span></td>
+                    <td><span class="status-badge status-active">${msg.status}</span></td>
+                `;
+            });
+        }
+
+        // Attendance Functions
+        function loadAttendanceTable() {
+            const tbody = document.getElementById('attendance-table-body');
+            const selectedDate = document.getElementById('attendance-date').value;
+            const selectedClass = document.getElementById('attendance-class').value;
+            
+            tbody.innerHTML = '';
+
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-light);">No students available for attendance.</td></tr>';
+                return;
+            }
+
+            const filteredStudents = students.filter(student => 
+                student.status === 'active' && 
+                (!selectedClass || student.class === selectedClass)
+            );
+
+            filteredStudents.forEach(student => {
+                const attendanceRecord = (attendanceRecords[selectedDate] && attendanceRecords[selectedDate][student.id]) || {};
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>
+                        <div class="student-photo">
+                            ${student.name.charAt(0).toUpperCase()}
+                        </div>
+                    </td>
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td>${student.class}</td>
+                    <td>
+                        <select class="form-select" onchange="updateAttendanceStatus('${student.id}', this.value)" style="padding: 8px; font-size: 14px;">
+                            <option value="">Select Status</option>
+                            <option value="present" ${attendanceRecord.status === 'present' ? 'selected' : ''}>Present</option>
+                            <option value="absent" ${attendanceRecord.status === 'absent' ? 'selected' : ''}>Absent</option>
+                            <option value="late" ${attendanceRecord.status === 'late' ? 'selected' : ''}>Late</option>
+                            <option value="excused" ${attendanceRecord.status === 'excused' ? 'selected' : ''}>Excused</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="time" class="form-input" value="${attendanceRecord.time || ''}" onchange="updateAttendanceTime('${student.id}', this.value)" style="padding: 8px; font-size: 14px; width: 120px;">
+                    </td>
+                    <td>
+                        <input type="text" class="form-input" value="${attendanceRecord.notes || ''}" onchange="updateAttendanceNotes('${student.id}', this.value)" placeholder="Add notes..." style="padding: 8px; font-size: 14px;">
+                    </td>
+                    <td>
+                        <button class="btn btn-success" style="padding: 6px 10px; font-size: 12px; margin-right: 5px;" onclick="markPresent('${student.id}')">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="markAbsent('${student.id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        function updateAttendanceStatus(studentId, status) {
+            const previousRecord = attendanceRecords[currentDate] && attendanceRecords[currentDate][studentId];
+            const previousStatus = previousRecord ? previousRecord.status : null;
+            
+            updateAttendanceRecord(studentId, { status: status });
+            
+            // Send WhatsApp message if status changed to absent and auto-send is enabled
+            if (status === 'absent' && previousStatus !== 'absent') {
+                const autoSend = JSON.parse(localStorage.getItem('whatsappSettings'))?.autoSendAbsent;
+                if (whatsappEnabled && autoSend) {
+                    sendWhatsAppMessage(studentId, 'absent');
+                }
+            }
+        }
+
+        function updateAttendanceTime(studentId, time) {
+            updateAttendanceRecord(studentId, { time: time });
+        }
+
+        function updateAttendanceNotes(studentId, notes) {
+            updateAttendanceRecord(studentId, { notes: notes });
+        }
+
+        function updateAttendanceRecord(studentId, updates) {
+            const selectedDate = document.getElementById('attendance-date').value;
+            
+            if (!attendanceRecords[selectedDate]) {
+                attendanceRecords[selectedDate] = {};
+            }
+            
+            if (!attendanceRecords[selectedDate][studentId]) {
+                attendanceRecords[selectedDate][studentId] = {};
+            }
+            
+            Object.assign(attendanceRecords[selectedDate][studentId], updates);
+            attendanceRecords[selectedDate][studentId].recordedAt = new Date().toISOString();
+            
+            saveToLocalStorage();
+            updateDashboardStats();
+        }
+
+        function markPresent(studentId) {
+            const currentTime = new Date();
+            const timeString = currentTime.getHours().toString().padStart(2, '0') + ':' + 
+                             currentTime.getMinutes().toString().padStart(2, '0');
+            
+            updateAttendanceRecord(studentId, {
+                status: 'present',
+                time: timeString
+            });
+            
+            loadAttendanceTable();
+            showNotification('Student marked as present', 'success');
+        }
+
+        function markAbsent(studentId) {
+            updateAttendanceRecord(studentId, {
+                status: 'absent',
+                time: ''
+            });
+            
+            // Send WhatsApp message if enabled
+            const autoSend = JSON.parse(localStorage.getItem('whatsappSettings'))?.autoSendAbsent;
+            if (whatsappEnabled && autoSend) {
+                sendWhatsAppMessage(studentId, 'absent');
+            }
+            
+            loadAttendanceTable();
+            showNotification('Student marked as absent', 'info');
+        }
+
+        function markAllPresent() {
+            if (confirm('Mark all students as present for today?')) {
+                const currentTime = new Date();
+                const timeString = currentTime.getHours().toString().padStart(2, '0') + ':' + 
+                                 currentTime.getMinutes().toString().padStart(2, '0');
+                
+                const selectedClass = document.getElementById('attendance-class').value;
+                const filteredStudents = students.filter(student => 
+                    student.status === 'active' && 
+                    (!selectedClass || student.class === selectedClass)
+                );
+                
+                filteredStudents.forEach(student => {
+                    updateAttendanceRecord(student.id, {
+                        status: 'present',
+                        time: timeString
+                    });
+                });
+                
+                loadAttendanceTable();
+                showNotification('All students marked as present', 'success');
+            }
+        }
+
+        function loadAttendanceForDate() {
+            currentDate = document.getElementById('attendance-date').value;
+            loadAttendanceTable();
+            updateDashboardStats();
+        }
+
+        function loadAttendanceForClass() {
+            loadAttendanceTable();
+        }
+
+        function saveAttendance() {
+            saveToLocalStorage();
+            showNotification('Attendance saved successfully', 'success');
+            addRecentActivity(`Attendance saved for ${document.getElementById('attendance-date').value}`);
+        }
+
+        // Report Functions
+        function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const startDate = document.getElementById('report-start-date').value;
+            const endDate = document.getElementById('report-end-date').value;
+            
+            if (!startDate || !endDate) {
+                showNotification('Please select start and end dates', 'error');
+                return;
+            }
+            
+            const reportResults = document.getElementById('report-results');
+            const reportContent = document.getElementById('report-content');
+            
+            // Generate a comprehensive report
+            let reportHTML = `
+                <h3>${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</h3>
+                <p><strong>Period:</strong> ${startDate} to ${endDate}</p>
+                <div style="margin-top: 20px;">
+                    <h4>Summary</h4>
+                    <p>Total Students: ${students.length}</p>
+                    <p>Total Teachers: ${teachers.length}</p>
+                    <p>Total Classes: ${classes.length}</p>
+                    <p>Report generated on: ${new Date().toLocaleDateString()}</p>
+                </div>
+            `;
+            
+            reportContent.innerHTML = reportHTML;
+            reportResults.style.display = 'block';
+            
+            showNotification('Report generated successfully', 'success');
+        }
+
+        function exportReportPDF() {
+            showNotification('PDF export functionality would be implemented here', 'info');
+        }
+
+        function exportReportExcel() {
+            showNotification('Excel export functionality would be implemented here', 'info');
+        }
+
+        // Import/Export Functions
+        function importStudents() {
+            document.getElementById('import-students-file').click();
+        }
+
+        function exportStudents() {
+            if (students.length === 0) {
+                showNotification('No students to export', 'warning');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Student ID,Name,Class,Email,Phone,Parent Phone,DOB,Address,Status\n" +
+                students.map(s => 
+                    `${s.id},${s.name},${s.class},${s.email || ''},${s.phone || ''},${s.parentPhone || ''},${s.dob || ''},${s.address || ''},${s.status}`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "students_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Students exported successfully', 'success');
+            addRecentActivity('Students exported to CSV');
+        }
+
+        function handleStudentImport(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n');
+                        const headers = lines[0].split(',');
+                        
+                        let importedCount = 0;
+                        for (let i = 1; i < lines.length; i++) {
+                            if (lines[i].trim()) {
+                                const values = lines[i].split(',');
+                                const student = {
+                                    id: values[0] || generateStudentId(),
+                                    name: values[1],
+                                    class: values[2],
+                                    email: values[3] || '',
+                                    phone: values[4] || '',
+                                    parentPhone: values[5] || '',
+                                    dob: values[6] || '',
+                                    address: values[7] || '',
+                                    status: values[8] || 'active'
+                                };
+                                
+                                if (student.name && student.class) {
+                                    // Check if student already exists
+                                    if (!students.some(s => s.id === student.id)) {
+                                        students.push(student);
+                                        importedCount++;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        saveToLocalStorage();
+                        loadStudentsTable();
+                        updateDashboardStats();
+                        showNotification(`${importedCount} students imported successfully`, 'success');
+                    } catch (error) {
+                        showNotification('Error importing file. Please check the format.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function importTeachers() {
+            document.getElementById('import-teachers-file').click();
+        }
+
+        function exportTeachers() {
+            if (teachers.length === 0) {
+                showNotification('No teachers to export', 'warning');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Teacher ID,Name,Subject,Email,Phone,Hire Date,Status\n" +
+                teachers.map(t => 
+                    `${t.id},${t.name},${t.subject},${t.email},${t.phone},${t.hireDate || ''},${t.status}`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "teachers_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Teachers exported successfully', 'success');
+            addRecentActivity('Teachers exported to CSV');
+        }
+
+        function handleTeacherImport(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n');
+                        
+                        let importedCount = 0;
+                        for (let i = 1; i < lines.length; i++) {
+                            if (lines[i].trim()) {
+                                const values = lines[i].split(',');
+                                const teacher = {
+                                    id: values[0] || generateTeacherId(),
+                                    name: values[1],
+                                    subject: values[2],
+                                    email: values[3] || '',
+                                    phone: values[4] || '',
+                                    hireDate: values[5] || '',
+                                    status: values[6] || 'active'
+                                };
+                                
+                                if (teacher.name && teacher.subject) {
+                                    if (!teachers.some(t => t.id === teacher.id)) {
+                                        teachers.push(teacher);
+                                        importedCount++;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        saveToLocalStorage();
+                        loadTeachersTable();
+                        populateAllDropdowns();
+                        updateDashboardStats();
+                        showNotification(`${importedCount} teachers imported successfully`, 'success');
+                    } catch (error) {
+                        showNotification('Error importing file. Please check the format.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Backup & Restore Functions
+        function createBackup() {
+            const backupData = {
+                students: students,
+                teachers: teachers,
+                classes: classes,
+                attendanceRecords: attendanceRecords,
+                whatsappMessages: whatsappMessages,
+                version: '2.0',
+                created: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `attendance_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            showNotification('Backup created successfully', 'success');
+            addRecentActivity('System backup created');
+        }
+
+        function restoreBackup() {
+            const file = document.getElementById('restore-file').files[0];
+            
+            if (!file) {
+                showNotification('Please select a backup file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // Validate backup data
+                    if (!backupData.students || !backupData.teachers || !backupData.classes) {
+                        throw new Error('Invalid backup file format');
+                    }
+                    
+                    if (confirm('This will replace all current data. Continue?')) {
+                        students = backupData.students || [];
+                        teachers = backupData.teachers || [];
+                        classes = backupData.classes || [];
+                        attendanceRecords = backupData.attendanceRecords || {};
+                        whatsappMessages = backupData.whatsappMessages || [];
+                        
+                        saveToLocalStorage();
+                        loadAllTables();
+                        populateAllDropdowns();
+                        updateDashboardStats();
+                        
+                        showNotification('Backup restored successfully', 'success');
+                        addRecentActivity('System backup restored');
+                    }
+                    
+                } catch (error) {
+                    showNotification('Invalid backup file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleAutoBackup() {
+            const enabled = document.getElementById('auto-backup-enabled').checked;
+            showNotification(`Auto backup ${enabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function saveBackupSettings() {
+            showNotification('Backup settings saved', 'success');
+        }
+
+        // Settings Functions
+        function saveSettings() {
+            showNotification('Settings saved successfully', 'success');
+        }
+
+        // Utility Functions
+        function populateAllDropdowns() {
+            populateClassDropdowns();
+            populateClassTeachers();
+        }
+
+        function populateClassDropdowns() {
+            const dropdowns = ['student-class', 'attendance-class', 'report-class', 'message-class'];
+            
+            dropdowns.forEach(dropdownId => {
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) {
+                    // Save current value
+                    const currentValue = dropdown.value;
+                    
+                    // Clear options except first
+                    while (dropdown.children.length > 1) {
+                        dropdown.removeChild(dropdown.lastChild);
+                    }
+                    
+                    // Add class options
+                    classes.forEach(classItem => {
+                        const option = document.createElement('option');
+                        option.value = classItem.name;
+                        option.textContent = classItem.name;
+                        dropdown.appendChild(option);
+                    });
+                    
+                    // Restore value
+                    dropdown.value = currentValue;
+                }
+            });
+        }
+
+        function populateClassTeachers() {
+            const dropdown = document.getElementById('class-teacher');
+            if (dropdown) {
+                dropdown.innerHTML = '<option value="">Select Teacher</option>';
+                
+                teachers.forEach(teacher => {
+                    const option = document.createElement('option');
+                    option.value = teacher.name;
+                    option.textContent = teacher.name;
+                    dropdown.appendChild(option);
+                });
+            }
+        }
+
+        function loadAllTables() {
+            loadStudentsTable();
+            loadTeachersTable();
+            loadClassesTable();
+            loadAttendanceTable();
+        }
+
+        // Recent Activity Functions
+        function loadRecentActivity() {
+            const activityContainer = document.getElementById('recent-activity');
+            const recentActivities = JSON.parse(localStorage.getItem('recentActivities')) || [];
+            
+            if (recentActivities.length === 0) {
+                activityContainer.innerHTML = `
+                    <p style="text-align: center; color: var(--text-light); padding: 40px;">
+                        <i class="fas fa-clock" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                        No recent activity
+                    </p>
+                `;
+                return;
+            }
+            
+            activityContainer.innerHTML = recentActivities.slice(0, 5).map(activity => `
+                <div style="padding: 15px 0; border-bottom: 1px solid var(--border);">
+                    <div style="font-weight: 500; color: var(--dark);">${activity.text}</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 5px;">
+                        <i class="fas fa-clock"></i> ${activity.timestamp}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addRecentActivity(activity) {
+            let recentActivities = JSON.parse(localStorage.getItem('recentActivities')) || [];
+            
+            const newActivity = {
+                text: activity,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            recentActivities.unshift(newActivity);
+            recentActivities = recentActivities.slice(0, 10); // Keep only last 10 activities
+            
+            localStorage.setItem('recentActivities', JSON.stringify(recentActivities));
+            loadRecentActivity();
+        }
+
+        function refreshActivity() {
+            loadRecentActivity();
+            showNotification('Activity refreshed', 'info');
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Local Storage Functions
+        function saveToLocalStorage() {
+            localStorage.setItem('students', JSON.stringify(students));
+            localStorage.setItem('teachers', JSON.stringify(teachers));
+            localStorage.setItem('classes', JSON.stringify(classes));
+            localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+            localStorage.setItem('whatsappMessages', JSON.stringify(whatsappMessages));
+        }
+
+        function loadFromLocalStorage() {
+            const savedStudents = localStorage.getItem('students');
+            const savedTeachers = localStorage.getItem('teachers');
+            const savedClasses = localStorage.getItem('classes');
+            const savedAttendance = localStorage.getItem('attendanceRecords');
+            const savedMessages = localStorage.getItem('whatsappMessages');
+            
+            if (savedStudents) {
+                students = JSON.parse(savedStudents);
+            }
+            
+            if (savedTeachers) {
+                teachers = JSON.parse(savedTeachers);
+            }
+            
+            if (savedClasses) {
+                classes = JSON.parse(savedClasses);
+            }
+            
+            if (savedAttendance) {
+                attendanceRecords = JSON.parse(savedAttendance);
+            }
+            
+            if (savedMessages) {
+                whatsappMessages = JSON.parse(savedMessages);
+            }
+        }
+
+        // Auto-save functionality
+        setInterval(() => {
+            saveToLocalStorage();
+        }, 30000); // Save every 30 seconds
+
+        // Event listeners for message recipients dropdown
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'message-recipients') {
+                const classSelector = document.getElementById('class-selector');
+                if (e.target.value === 'class') {
+                    classSelector.style.display = 'block';
+                } else {
+                    classSelector.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

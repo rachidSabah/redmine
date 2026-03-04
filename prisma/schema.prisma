@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -602,7 +602,7 @@ model Activity {
   ticketId       String?
   userId         String
   type           ActivityType
-  description    String        @db.Text
+  description    String        
   metadata       Json?
   
   ticket         Ticket?      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -916,7 +916,7 @@ model EmailTemplate {
   organizationId    String?
   name              String
   subject           String
-  body              String   @db.Text
+  body              String   
   type              String   // ticket_assigned, ticket_updated, project_invited, etc.
   variables         Json?    // available variables for template
   isActive          Boolean  @default(true)
@@ -937,7 +937,7 @@ model EmailLog {
   toEmail           String
   toName            String?
   subject           String
-  body              String   @db.Text
+  body              String   
   
   status            String   // pending, sent, failed
   errorMessage      String?
@@ -1654,6 +1654,7 @@ model EduClass {
   isActive        Boolean  @default(true)
   
   students        Student[]
+  monthlySchedules MonthlySchedule[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1707,6 +1708,7 @@ model Student {
   
   grades          StudentGrade[]
   attendance      StudentAttendance[]
+  communicationLogs CommunicationLog[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1741,6 +1743,7 @@ model Teacher {
   status          String   @default("active") // active, on_leave, resigned, terminated
   
   classes         EduClass[]  // Classes they teach
+  scheduleEntries ScheduleEntry[] // Schedule entries they teach
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1761,6 +1764,8 @@ model StudentGrade {
   
   subject         String
   term            String?  // Quarter, Semester, Final
+  period          Int      @default(1)  // 1 or 2 (for 18-month program, 9 months each)
+  gradeType       String   @default("CC")  // CC, EFCF_T, EFCF_P
   
   grade           String?  // A, B, C or numeric
   score           Float?   // Numeric score
@@ -1780,6 +1785,8 @@ model StudentGrade {
   @@index([studentId])
   @@index([sessionId])
   @@index([classId])
+  @@index([period])
+  @@index([gradeType])
   @@map("student_grades")
 }
 
@@ -1878,7 +1885,7 @@ model MessageTemplate {
   
   // Template content with variables support
   subject           String?
-  body              String    @db.Text  // Supports {{variable}} syntax
+  body              String      // Supports {{variable}} syntax
   
   // Variable definitions
   variables         Json?     // ["student_name", "date", "class_name"]
@@ -1895,6 +1902,10 @@ model MessageTemplate {
   lastUsedAt        DateTime?
   
   createdBy         String?
+  
+  // Relations
+  communicationLogs CommunicationLog[]
+  automations       AttendanceAutomation[]
   
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -1917,7 +1928,7 @@ model CommunicationLog {
   
   // Message info
   templateId        String?
-  messageContent    String    @db.Text
+  messageContent    String    
   
   // Channel
   channel           String    @default("whatsapp") // whatsapp, email, sms
@@ -1938,6 +1949,10 @@ model CommunicationLog {
   
   // Cost tracking
   cost              Float?
+  
+  // Relations
+  student           Student?  @relation(fields: [studentId], references: [id])
+  template          MessageTemplate? @relation(fields: [templateId], references: [id])
   
   createdAt         DateTime  @default(now())
   
@@ -1967,6 +1982,7 @@ model AttendanceAutomation {
   // Actions
   actionType        String    // send_message, notify_director, both
   templateId        String?
+  template          MessageTemplate? @relation(fields: [templateId], references: [id])
   
   // Settings
   sendToParent      Boolean   @default(true)
@@ -1989,6 +2005,7 @@ model AttendanceAutomation {
   
   @@index([organizationId])
   @@index([triggerType])
+  @@index([templateId])
   @@map("attendance_automations")
 }
 
@@ -2148,7 +2165,7 @@ model Homework {
   organizationId    String
   
   title             String
-  description       String    @db.Text
+  description       String    
   
   classId           String
   subject           String?
@@ -2177,7 +2194,7 @@ model HomeworkSubmission {
   studentId         String
   
   submittedAt       DateTime?
-  content           String?   @db.Text
+  content           String?   
   attachments       Json?     // Array of file URLs
   
   status            String    @default("pending") // pending, submitted, graded
@@ -2207,7 +2224,7 @@ model StaffTask {
   organizationId    String
   
   title             String
-  description       String?   @db.Text
+  description       String?   
   
   assignedTo        String    // Teacher ID
   assignedBy        String?   // User ID (Director/Admin)
@@ -2227,4 +2244,139 @@ model StaffTask {
   @@index([assignedTo])
   @@index([status])
   @@map("staff_tasks")
+}
+
+// =====================================================
+// CLASS SCHEDULING SYSTEM
+// =====================================================
+
+// Education Module (Subject)
+model EduModule {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String    // e.g., "Mathematics", "Physics", "English"
+  code              String?   // e.g., "MATH101"
+  description       String?   
+  color             String?   @default("#3B82F6")
+  
+  // Credits/hours
+  creditHours       Int?      @default(1)
+  
+  isActive          Boolean   @default(true)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  scheduleEntries   ScheduleEntry[]
+  
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("edu_modules")
+}
+
+// Monthly Schedule Header
+model MonthlySchedule {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  classId           String
+  month             Int       // 1-12
+  year              Int       // e.g., 2024
+  
+  schoolName        String?   // Cached at creation time
+  
+  // Status
+  isPublished       Boolean   @default(false)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  entries           ScheduleEntry[]
+  class             EduClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  @@unique([classId, month, year])
+  @@index([organizationId])
+  @@index([classId])
+  @@index([month, year])
+  @@map("monthly_schedules")
+}
+
+// Individual Day Schedule Entry
+model ScheduleEntry {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  monthlyScheduleId String
+  date              DateTime  // The specific date
+  
+  teacherId         String?   // Can be null if not assigned
+  moduleId          String?   // Can be null if not assigned
+  
+  startTime         String?   // e.g., "08:00"
+  endTime           String?   // e.g., "10:00"
+  
+  notes             String?   
+  
+  // Day of week (computed for easier querying)
+  dayOfWeek         Int       // 0=Sunday, 1=Monday, etc.
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  monthlySchedule   MonthlySchedule @relation(fields: [monthlyScheduleId], references: [id], onDelete: Cascade)
+  teacher           Teacher?  @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  module            EduModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  
+  @@unique([monthlyScheduleId, date])
+  @@index([organizationId])
+  @@index([monthlyScheduleId])
+  @@index([teacherId])
+  @@index([date])
+  @@map("schedule_entries")
+}
+
+// =====================================================
+// BULK IMPORT TRACKING
+// =====================================================
+
+model StudentImport {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  fileName          String
+  totalRows         Int
+  successCount      Int       @default(0)
+  failCount         Int       @default(0)
+  
+  errors            Json?     // Array of row errors
+  
+  importedBy        String?   // User ID
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([organizationId])
+  @@index([importedBy])
+  @@map("student_imports")
+}
+
+model TeacherImport {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  fileName          String
+  totalRows         Int
+  successCount      Int       @default(0)
+  failCount         Int       @default(0)
+  
+  errors            Json?     // Array of row errors
+  
+  importedBy        String?   // User ID
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([organizationId])
+  @@index([importedBy])
+  @@map("teacher_imports")
 }

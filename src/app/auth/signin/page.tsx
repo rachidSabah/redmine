@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { signIn } from "next-auth/react";
+import { Suspense, useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,47 +14,111 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const { data: session, status, update } = useSession();
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // If already authenticated, redirect to callback URL
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      console.log("Already authenticated, redirecting to:", callbackUrl);
+      // Use window.location for a full page reload to ensure session is loaded
+      window.location.href = callbackUrl;
+    }
+  }, [status, session, callbackUrl]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      console.log("Attempting sign in with:", identifier);
+      
       const result = await signIn("credentials", {
         identifier,
         password,
         redirect: false,
       });
 
+      console.log("Sign in result:", result);
+
       if (result?.error) {
+        console.log("Sign in error:", result.error);
         toast({
           title: "Authentication Failed",
-          description: "Invalid email/username or password. Please try again.",
+          description: result.error === "CredentialsSignin" 
+            ? "Invalid email/username or password. Please try again."
+            : result.error,
           variant: "destructive",
         });
+        setIsLoading(false);
       } else {
         toast({
           title: "Success",
-          description: "Signed in successfully!",
+          description: "Signed in successfully! Redirecting...",
         });
-        // Use window.location for a full page refresh to ensure session is properly loaded
-        window.location.href = callbackUrl;
+        // Force a session update
+        await update();
+        // Use window.location for a full page reload
+        // This ensures the session is properly loaded
+        setTimeout(() => {
+          console.log("Redirecting to:", callbackUrl);
+          window.location.href = callbackUrl;
+        }, 300);
       }
     } catch (error) {
+      console.error("Sign in exception:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading if checking session
+  if (status === "loading") {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
+              <FolderKanban className="h-7 w-7 text-primary-foreground" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Synchro PM</CardTitle>
+          <CardDescription>Loading...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If already authenticated, show loading
+  if (status === "authenticated") {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
+              <FolderKanban className="h-7 w-7 text-primary-foreground" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Synchro PM</CardTitle>
+          <CardDescription>Redirecting...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -110,6 +174,7 @@ function SignInForm() {
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>Demo Admin Account:</p>
           <p className="font-mono text-xs mt-1">ranelsabah@admin.synchropm.com</p>
+          <p className="font-mono text-xs">Password: Santafee@@@@@1972</p>
         </div>
       </CardContent>
     </Card>
