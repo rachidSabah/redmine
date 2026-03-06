@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INFOHAS Grade Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/docx@7.8.1/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --primary-color: #6a5acd; /* A more modern purple */
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+            --dark-color: #343a40;
+            --light-gray: #f8f9fa;
+            --border-color: #dee2e6;
+            --sidebar-bg: #ffffff;
+            --body-bg: #f5f7fb;
+            --text-color: #495057;
+            --sidebar-width: 450px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .sidebar-header .logo {
+            font-weight: 700;
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .card {
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            background-color: var(--light-gray);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 2px rgba(106, 90, 205, 0.25);
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            border-radius: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .nav-tabs .nav-link {
+            font-weight: 600;
+            border-radius: 0.5rem 0.5rem 0 0;
+            padding: 0.75rem 1.25rem;
+            border: 2px solid transparent;
+            color: var(--secondary-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .modules-table th, .summary-table thead {
+            font-weight: 600;
+            background-color: #343a40;
+            color: white;
+        }
+        
+        #backupSystemPane .card {
+            background-color: #fff;
+        }
+        
+        #backupSystemPane h5 {
+            color: var(--primary-color);
+        }
+
+        /* Simple HTML Editor */
+        .editor-toolbar {
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            padding: 0.5rem;
+            background-color: var(--light-gray);
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .editor-toolbar button {
+            border: 1px solid transparent;
+            background-color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .editor-toolbar button:hover {
+            background-color: #e9ecef;
+        }
+        #footerEditor {
+            border: 1px solid var(--border-color);
+            min-height: 100px;
+            padding: 0.5rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            background-color: white;
+        }
+        
+        .modules-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        
+        .modules-table .table-input {
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 4px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modules-table th:nth-child(1) { width: 8%; } /* UF */
+        .modules-table th:nth-child(2) { width: 8%; } /* Code */
+        .modules-table th:nth-child(3) { width: 25%; } /* Module Title */
+        .modules-table th:nth-child(4) { width: 8%; } /* CC */
+        .modules-table th:nth-child(5) { width: 10%; } /* EFCF T */
+        .modules-table th:nth-child(6) { width: 10%; } /* EFCF P */
+        .modules-table th:nth-child(7) { width: 25%; } /* Comment */
+        .modules-table th:nth-child(8) { width: 6%; } /* Remove button */
+
+        /* Cloud storage styles */
+        .cloud-option {
+            border: 1px solid var(--border-color);
+            border-radius: .5rem;
+            padding: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .cloud-option.disabled {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+        .cloud-option-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cloud-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-configured { color: var(--success-color); }
+        .status-unconfigured { color: var(--secondary-color); }
+        .status-connected { color: var(--primary-color); }
+        .status-error { color: var(--danger-color); }
+        
+        #toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
+
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow: auto;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .main-content {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">INFOHAS</div>
+            <p class="text-muted mb-0">Grade Calculation System</p>
+        </div>
+        <div class="sidebar-content">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Student Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="studentName" value="AIT HAJJOU IMANE">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Registration Number</label>
+                        <input type="text" class="form-control" id="registrationNumber" value="F07/24">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Promotion</label>
+                        <input type="text" class="form-control" id="promotion" value="2023/2025">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="text" class="form-control" id="date" value="JUILLET 2025">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+                 <div class="col-12">
+                     <button class="btn btn-outline-primary w-100" id="newStudentBtn">New Student</button>
+                 </div>
+                 <div class="col-6">
+                    <button class="btn btn-primary w-100" id="calculateBtn">Calculate</button>
+                 </div>
+                 <div class="col-6">
+                    <button class="btn btn-success w-100" id="saveStudent">Save Student</button>
+                 </div>
+            </div>
+
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Saved Students</h5>
+                </div>
+                <div class="card-body">
+                     <div class="mb-3">
+                        <label for="academicYearFilter" class="form-label">Filter by Academic Year</label>
+                        <select class="form-select" id="academicYearFilter">
+                            <option value="all">All Students</option>
+                        </select>
+                    </div>
+                    <div class="student-list-container" id="savedStudentsList">
+                        <p class="text-muted">No students saved yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <ul class="nav nav-tabs" id="yearTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="year1-tab" data-bs-toggle="tab" data-bs-target="#year1-pane" type="button" role="tab">Academic Years</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="backup-system-tab" data-bs-toggle="tab" data-bs-target="#backupSystemPane" type="button" role="tab">Backup System</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="data-management-tab" data-bs-toggle="tab" data-bs-target="#dataManagementPane" type="button" role="tab">Data Management</button>
+            </li>
+        </ul>
+
+        <div class="tab-content pt-4" id="yearTabsContent">
+            <div class="tab-pane fade show active" id="year1-pane" role="tabpanel">
+               <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pills-year1-tab" data-bs-toggle="pill" data-bs-target="#pills-year1" type="button" role="tab">1st Year</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-year2-tab" data-bs-toggle="pill" data-bs-target="#pills-year2" type="button" role="tab">2nd Year</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pills-final-results-tab" data-bs-toggle="pill" data-bs-target="#pills-final-results" type="button" role="tab">Final Results</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="pills-year1" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">1st Year Modules</h5></div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm modules-table" id="modulesTable1">
+                                        <thead><tr><th>UF</th><th>Code</th><th>Module Title</th><th>CC</th><th>EFCF T</th><th>EFCF P</th><th>Comment</th><th></th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2" id="addModule1">+ Add Module</button>
+                            </div>
+                        </div>
+                        <div class="card mt-4">
+                            <div class="card-header"><h5 class="mb-0">1st Year Results</h5></div>
+                            <div class="card-body">
+                                <table class="table table-bordered summary-table">
+                                    <thead><tr><th>Description</th><th>Value</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>MCC1 (Average of Continuous Controls)</td><td id="mcc1Result_preview">-</td></tr>
+                                        <tr><td>MEFCFT1 (Average of Theoretical Exams)</td><td id="mefcft1Result_preview">-</td></tr>
+                                        <tr><td>MEFCFP1 (Average of Practical Exams)</td><td id="mefcfp1Result_preview">-</td></tr>
+                                        <tr class="table-success"><td>1st Year Final Average</td><td id="year1FinalResult_preview">-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pills-year2" role="tabpanel">
+                       <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Final Presentation Grade</h5></div>
+                            <div class="card-body"><div class="mb-3"><label class="form-label">Note attribuée à la soutenance</label><input type="number" step="0.01" class="form-control" id="soutenance" value="14.00"></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">2nd Year Modules</h5></div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm modules-table" id="modulesTable2">
+                                        <thead><tr><th>UF</th><th>Code</th><th>Module Title</th><th>CC</th><th>EFCF T</th><th>EFCF P</th><th>Comment</th><th></th></tr></thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2" id="addModule2">+ Add Module</button>
+                            </div>
+                        </div>
+                        <div class="card mt-4">
+                            <div class="card-header"><h5 class="mb-0">2nd Year Results</h5></div>
+                            <div class="card-body">
+                                <table class="table table-bordered summary-table">
+                                     <thead><tr><th>Description</th><th>Value</th></tr></thead>
+                                     <tbody>
+                                        <tr><td>MCC2 (Average of Continuous Controls)</td><td id="mcc2Result_preview">-</td></tr>
+                                        <tr><td>MEFCFT2 (Average of Theoretical Exams)</td><td id="mefcft2Result_preview">-</td></tr>
+                                        <tr><td>MEFCFP2 (Average of Practical Exams)</td><td id="mefcfp2Result_preview">-</td></tr>
+                                        <tr class="table-success"><td>2nd Year Final Average</td><td id="year2FinalResult_preview">-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                         <div class="final-grade-frame">
+                           <h4>Aperçu de la note finale</h4>
+                           <p id="finalGradeResult_preview"><strong>Note Finale: -/20</strong></p>
+                       </div>
+                    </div>
+                    <div class="tab-pane fade" id="pills-final-results" role="tabpanel">
+                        <div class="final-grade-frame">
+                            <h4>Final Grade Calculation</h4>
+                            <p>Final Grade = (Combined CC × 3 + Combined EFCF T × 2 + Combined EFCF P × 3 + Soutenance × 2) / 10</p>
+                            <p id="finalGradeResult"><strong>Final Grade: -/20</strong></p>
+                        </div>
+                        <div class="detailed-calculation card">
+                             <div class="card-header"><h5 class="mb-0">Detailed Calculation</h5></div>
+                             <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered calculation-table">
+                                        <thead><tr><th>Component</th><th>1st Year</th><th>2nd Year</th><th>Combined</th><th>Weight</th><th>Weighted Score</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>CC (Continuous Control)</td><td id="cc1Value">-</td><td id="cc2Value">-</td><td id="ccCombined">-</td><td>3</td><td id="ccWeighted">-</td></tr>
+                                            <tr><td>EFCF T (Theoretical Exams)</td><td id="efcft1Value">-</td><td id="efcft2Value">-</td><td id="efcftCombined">-</td><td>2</td><td id="efcftWeighted">-</td></tr>
+                                            <tr><td>EFCF P (Practical Exams)</td><td id="efcfp1Value">-</td><td id="efcfp2Value">-</td><td id="efcfpCombined">-</td><td>3</td><td id="efcfpWeighted">-</td></tr>
+                                            <tr><td>Soutenance</td><td>-</td><td id="soutenanceValue">-</td><td id="soutenanceCombined">-</td><td>2</td><td id="soutenanceWeighted">-</td></tr>
+                                            <tr class="table-success"><td><strong>Total</strong></td><td colspan="4"><strong>Sum of Weighted Scores / 10</strong></td><td id="totalWeighted"><strong>-</strong></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="backupSystemPane" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="mb-4">Système de Sauvegarde</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                 <div class="card shadow-sm mb-4">
+                                    <div class="card-body">
+                                        <h5>Sauvegarde Manuelle et Restauration</h5>
+                                        <p class="text-muted">Sauvegardez toutes les données ou restaurez à partir d'un fichier.</p>
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-success" id="backupNowBtn">Sauvegarder Maintenant</button>
+                                            <button class="btn btn-warning" id="restoreBackupBtn">Restaurer une Sauvegarde</button>
+                                            <button class="btn btn-info" id="backupHistoryBtn">Historique des Sauvegardes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card shadow-sm">
+                                    <div class="card-body">
+                                        <h5>La sauvegarde inclut</h5>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="students" id="includeStudentRecords" checked>
+                                            <label class="form-check-label" for="includeStudentRecords">Dossiers des étudiants</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="settings" id="includeSettingsData" checked>
+                                            <label class="form-check-label" for="includeSettingsData">Paramètres (Logos, Pied de page)</label>
+                                        </div>
+                                         <div class="form-check mt-3">
+                                            <input class="form-check-input" type="radio" name="backupDestination" id="destLocal" value="local" checked>
+                                            <label class="form-check-label" for="destLocal">Téléchargement Local</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-body">
+                                        <h5>Destinations Cloud</h5>
+                                        <p class="text-muted">Sélectionnez un service cloud pour sauvegarder vos données. La configuration est requise.</p>
+                                        
+                                        <!-- Google Drive Option -->
+                                        <div class="cloud-option mb-3" id="gdrive-option">
+                                            <div class="cloud-option-header">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="backupDestination" id="destGoogleDrive" value="gdrive" disabled>
+                                                    <label class="form-check-label" for="destGoogleDrive">Google Drive</label>
+                                                </div>
+                                                <span class="cloud-status status-unconfigured" id="gdrive-status">Non configuré</span>
+                                            </div>
+                                            <div class="mt-2 text-center">
+                                                <button class="btn btn-sm btn-outline-primary" id="gdrive-connect-btn" disabled>Connecter</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dropbox Option -->
+                                        <div class="cloud-option mb-3 disabled">
+                                            <div class="cloud-option-header">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="backupDestination" id="destDropbox" value="dropbox" disabled>
+                                                    <label class="form-check-label" for="destDropbox">Dropbox</label>
+                                                </div>
+                                                <span class="cloud-status status-unconfigured" id="dropbox-status">Non implémenté</span>
+                                            </div>
+                                             <div class="mt-2 text-center">
+                                                <button class="btn btn-sm btn-outline-primary" id="dropbox-connect-btn" disabled>Connecter</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- OneDrive Option -->
+                                        <div class="cloud-option disabled">
+                                            <div class="cloud-option-header">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="backupDestination" id="destOneDrive" value="onedrive" disabled>
+                                                    <label class="form-check-label" for="destOneDrive">OneDrive</label>
+                                                </div>
+                                                <span class="cloud-status status-unconfigured" id="onedrive-status">Non implémenté</span>
+                                            </div>
+                                             <div class="mt-2 text-center">
+                                                <button class="btn btn-sm btn-outline-primary" id="onedrive-connect-btn" disabled>Connecter</button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="productionMode" checked>
+                                            <label class="form-check-label" for="productionMode">Mode Production (désactiver pour les tests)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Key Configuration Section -->
+                        <div class="card shadow-sm mt-4">
+                            <div class="card-body">
+                                <div class="accordion" id="apiConfigAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                                Configuration des Clés API Cloud
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#apiConfigAccordion">
+                                            <div class="accordion-body">
+                                                <p class="text-muted">Entrez vos clés API ici pour activer la sauvegarde cloud. Les clés sont sauvegardées localement dans votre navigateur.</p>
+                                                <div class="mb-3">
+                                                    <label for="googleApiKey" class="form-label">Google Drive API Key</label>
+                                                    <input type="password" class="form-control" id="googleApiKey" placeholder="Entrez votre clé API Google">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="googleClientId" class="form-label">Google Drive Client ID</label>
+                                                    <input type="password" class="form-control" id="googleClientId" placeholder="Entrez votre ID Client Google">
+                                                </div>
+                                                <button class="btn btn-primary" id="saveApiKeysBtn">Sauvegarder la Configuration</button>
+                                                <hr>
+                                                <h6><span class="badge bg-warning">Important</span> Comment corriger l'erreur "Error 400: invalid_request"</h6>
+                                                <p>Cette erreur se produit car Google ne sait pas d'où vient votre application. Pour la corriger, vous devez autoriser votre adresse dans la Google Cloud Console.</p>
+                                                <ol>
+                                                    <li>Ouvrez votre projet dans la <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>.</li>
+                                                    <li>Allez dans "APIs et services" &rarr; "Identifiants".</li>
+                                                    <li>Cliquez sur le nom de votre "ID client OAuth 2.0".</li>
+                                                    <li>Dans la section <strong>"Origines JavaScript autorisées"</strong>, cliquez sur "AJOUTER UN URI".</li>
+                                                    <li><strong>C'est l'étape la plus importante.</strong> Vous devez ajouter l'adresse exacte sur laquelle vous exécutez ce fichier.
+                                                        <ul>
+                                                            <li>Si vous utilisez un serveur local (comme "Live Server" dans VS Code), ajoutez l'adresse, par exemple : <code>http://127.0.0.1:5500</code></li>
+                                                            <li>Si vous hébergez le fichier en ligne, ajoutez l'URL de votre site : <code>https://www.votresite.com</code></li>
+                                                        </ul>
+                                                    </li>
+                                                     <li>Google ne permet plus d'utiliser des fichiers locaux (<code>file:///...</code>) pour des raisons de sécurité.</li>
+                                                    <li>Cliquez sur "ENREGISTRER". La connexion devrait maintenant fonctionner.</li>
+                                                </ol>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="dataManagementPane" role="tabpanel">
+               <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Branding &amp; Customization</h5></div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="logoUpload" class="form-label">Upload Left Logo</label>
+                                    <input class="form-control" type="file" id="logoUpload" accept="image/png, image/jpeg">
+                                </div>
+                                <img src="" alt="Left Logo Preview" id="logoPreview" class="mt-2 d-none" style="max-width: 150px;">
+                                <div class="mb-3 mt-3">
+                                    <label for="logoUploadRight" class="form-label">Upload Right Logo</label>
+                                    <input class="form-control" type="file" id="logoUploadRight" accept="image/png, image/jpeg">
+                                </div>
+                                <img src="" alt="Right Logo Preview" id="logoPreviewRight" class="mt-2 d-none" style="max-width: 150px;">
+                                 <hr>
+                                <div class="mb-3">
+                                    <label for="footerEditor" class="form-label">Footer Text for DOCX</label>
+                                    <div class="editor-toolbar">
+                                        <button id="boldBtn"><b>B</b></button>
+                                        <button id="italicBtn"><i>I</i></button>
+                                        <button id="underlineBtn"><u>U</u></button>
+                                    </div>
+                                    <div id="footerEditor" contenteditable="true" class="form-control" style="min-height: 100px;"></div>
+                                </div>
+                                <button class="btn btn-success" id="saveFooterBtn">Save Footer Text</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5 class="mb-0">Exports &amp; Imports</h5></div>
+                            <div class="card-body d-grid gap-2">
+                                <button class="btn btn-warning" id="generateYear1Docx">Export 1st Year Transcript</button>
+                                <button class="btn btn-danger" id="generateYear2Docx">Export 2nd Year Transcript</button>
+                                <button class="btn btn-dark" id="generateCompleteDocx">Export Complete Transcript</button>
+                                <hr>
+                                <button class="btn btn-primary" id="extract1stYear">Extract 1st Year Table</button>
+                                <button class="btn btn-secondary" id="extract2ndYear">Extract 2nd Year Table</button>
+                                 <hr>
+                                 <button class="btn btn-light" id="downloadCsvTemplate">Download CSV Template</button>
+                                <button class="btn btn-info" id="importCsvBtn">Import Students (CSV)</button>
+                                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                                <hr>
+                                <button class="btn btn-primary" id="exportByPromotionBtn">Export by Promotion (JSON)</button>
+                                <button class="btn btn-dark" id="exportJsonBtn">Export All Data (JSON)</button>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <div class="modal fade" id="studentSelectionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select Students to Export</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><input type="text" id="studentSearch" class="form-control" placeholder="Search students..."></div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="selectAllStudents">
+                        <label class="form-check-label" for="selectAllStudents">Select All Visible Students</label>
+                    </div>
+                    <div class="student-modal-list" id="studentModalList"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="modalExportBtn">Export Selected</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="extractionModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="extractionModalTitle">Enter Student Codes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Please enter the required codes for each student before generating the summary table.</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>N° d'inscription (antérieure)</th>
+                                    <th>Code du lauréat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="extractionTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveAndGenerateBtn">Save and Generate DOCX</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportPromotionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Export by Promotion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="promotionSelect" class="form-label">Select Promotion to Export</label>
+                    <select class="form-select" id="promotionSelect"></select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmExportPromotion">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="restoreFileInput" accept=".json" style="display: none;">
+
+    <div class="modal fade" id="backupHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Backup History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">This list shows your recent backup activities. Backup files are downloaded to your computer.</p>
+                    <ul class="list-group" id="backupHistoryList">
+                        </ul>
+                </div>
+                <div class="modal-footer">
+                     <button type="button" class="btn btn-danger" id="clearBackupHistoryBtn">Clear History</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let modules1 = [];
+        let modules2 = [];
+        let currentExportType = null;
+        let selectedStudents = [];
+        let currentExtractionYear = null;
+        
+        // --- Google Drive Integration Variables ---
+        let gapiInited = false;
+        let gisInited = false;
+        let tokenClient;
+        let cloudConfig = {}; // Will be loaded from localStorage
+        // ---
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Default data for demonstration
+            modules1 = [
+                { uf: 'UF1', code: 'C2.2', title: 'Premiers secours', cc: 17.00, efcfT: 10.00, efcfP: 12.00, comment: 'GOOD RESULTS' },
+                { uf: 'UF2', code: 'C2.1', title: 'Communication en anglais', cc: 15.00, efcfT: 17.00, efcfP: 14.00, comment: 'A studious student. Keep up' },
+                { uf: 'UF3', code: 'C2.1', title: 'Customer service awareness', cc: 14.00, efcfT: 14.00, efcfP: 13.00, comment: 'AVERAGE RESULTS' },
+            ];
+            modules2 = [{ uf: 'UF11', code: 'C2.3', title: 'Module 2nd Year Example', cc: 14.17, efcfT: 14.00, efcfP: 15.00, comment: 'Good progress' }];
+
+            renderModules(1);
+            renderModules(2);
+            setupEventListeners();
+            loadSettings();
+            populateAcademicYearFilter();
+            loadSavedStudents();
+            calculateGrades();
+            loadAndApplyCloudConfig();
+        });
+
+        function setupEventListeners() {
+            // Sidebar buttons
+            document.getElementById('newStudentBtn').addEventListener('click', clearFormForNewStudent);
+            document.getElementById('calculateBtn').addEventListener('click', calculateGrades);
+            document.getElementById('saveStudent').addEventListener('click', saveStudent);
+            document.getElementById('academicYearFilter').addEventListener('change', (e) => loadSavedStudents(e.target.value));
+
+            // Module buttons
+            document.getElementById('addModule1').addEventListener('click', () => addModule(1));
+            document.getElementById('addModule2').addEventListener('click', () => addModule(2));
+
+            // Export buttons
+            document.getElementById('generateYear1Docx').addEventListener('click', () => showStudentSelectionModal(1));
+            document.getElementById('generateYear2Docx').addEventListener('click', () => showStudentSelectionModal(2));
+            document.getElementById('generateCompleteDocx').addEventListener('click', () => showStudentSelectionModal(3));
+            document.getElementById('extract1stYear').addEventListener('click', () => showExtractionModal(1));
+            document.getElementById('extract2ndYear').addEventListener('click', () => showExtractionModal(2));
+
+            // Settings, Branding, Data Management
+            document.getElementById('logoUpload').addEventListener('change', (e) => handleLogoUpload(e, 'schoolLogoLeft', 'logoPreview'));
+            document.getElementById('logoUploadRight').addEventListener('change', (e) => handleLogoUpload(e, 'schoolLogoRight', 'logoPreviewRight'));
+            document.getElementById('saveFooterBtn').addEventListener('click', saveFooterText);
+            document.getElementById('downloadCsvTemplate').addEventListener('click', downloadCsvTemplate);
+            document.getElementById('importCsvBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
+            document.getElementById('csvFileInput').addEventListener('change', importStudentsFromCSV);
+            document.getElementById('exportByPromotionBtn').addEventListener('click', showExportByPromotionModal);
+            document.getElementById('confirmExportPromotion').addEventListener('click', exportByPromotion);
+            document.getElementById('exportJsonBtn').addEventListener('click', exportAllData);
+
+
+            // Backup System
+            document.getElementById('backupNowBtn').addEventListener('click', backupNow);
+            document.getElementById('restoreBackupBtn').addEventListener('click', () => document.getElementById('restoreFileInput').click());
+            document.getElementById('restoreFileInput').addEventListener('change', restoreFromLocal);
+            document.getElementById('backupHistoryBtn').addEventListener('click', showBackupHistory);
+            document.getElementById('clearBackupHistoryBtn').addEventListener('click', clearBackupHistory);
+            document.getElementById('saveApiKeysBtn').addEventListener('click', saveCloudConfigAndReload);
+
+            // Cloud buttons
+            document.getElementById('gdrive-connect-btn').addEventListener('click', handleGoogleAuthClick);
+            document.getElementById('dropbox-connect-btn').addEventListener('click', () => showToast('Intégration Dropbox non implémentée.', 'warning'));
+            document.getElementById('onedrive-connect-btn').addEventListener('click', () => showToast('Intégration OneDrive non implémentée.', 'warning'));
+
+
+            // Modal listeners
+            document.getElementById('studentSearch').addEventListener('input', filterStudentList);
+            document.getElementById('selectAllStudents').addEventListener('change', toggleSelectAllStudents);
+            document.getElementById('modalExportBtn').addEventListener('click', exportSelectedStudents);
+            document.getElementById('saveAndGenerateBtn').addEventListener('click', saveExtractionDataAndGenerate);
+        
+            // Editor Toolbar
+            document.getElementById('boldBtn').addEventListener('click', () => document.execCommand('bold'));
+            document.getElementById('italicBtn').addEventListener('click', () => document.execCommand('italic'));
+            document.getElementById('underlineBtn').addEventListener('click', () => document.execCommand('underline'));
+        }
+        
+        function downloadCsvTemplate() {
+            const header = '"Nom et Prénom","N° Inscription","Promotion","Date"';
+            const example = '"John Doe","F01/25","2024/2026","JUILLET 2026"';
+            const csvContent = `${header}\n${example}`;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            saveAs(blob, 'student_import_template.csv');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-white bg-${type} border-0 show`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            container.appendChild(toastEl);
+            const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+            toast.show();
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        }
+
+        // --- Cloud Integration Functions ---
+
+        function saveCloudConfigAndReload() {
+            const config = {
+                google: {
+                    apiKey: document.getElementById('googleApiKey').value.trim(),
+                    clientId: document.getElementById('googleClientId').value.trim(),
+                    scopes: "https://www.googleapis.com/auth/drive.file"
+                }
+            };
+            localStorage.setItem('cloudApiSettings', JSON.stringify(config));
+            alert('Configuration sauvegardée. La page va maintenant se recharger pour appliquer les changements.');
+            window.location.reload();
+        }
+
+        function loadAndApplyCloudConfig() {
+            const savedSettings = localStorage.getItem('cloudApiSettings');
+            if (savedSettings) {
+                cloudConfig = JSON.parse(savedSettings);
+                if (cloudConfig.google) {
+                    document.getElementById('googleApiKey').value = cloudConfig.google.apiKey || '';
+                    document.getElementById('googleClientId').value = cloudConfig.google.clientId || '';
+                }
+            }
+            initializeCloudIntegrations();
+        }
+
+        function initializeCloudIntegrations() {
+            const googleConfig = cloudConfig.google || {};
+            if (googleConfig.clientId && googleConfig.apiKey) {
+                document.getElementById('destGoogleDrive').disabled = false;
+                document.getElementById('gdrive-connect-btn').disabled = false;
+                document.getElementById('gdrive-status').textContent = 'Prêt';
+                document.getElementById('gdrive-status').className = 'cloud-status status-configured';
+                gapi.load('client', initializeGapiClient);
+                gisInited = google.accounts.oauth2.initTokenClient({
+                    client_id: googleConfig.clientId,
+                    scope: googleConfig.scopes,
+                    callback: '', // A blank callback avoids a redirect.
+                });
+            } else {
+                console.warn('Clés Google Drive manquantes. La fonctionnalité est désactivée.');
+            }
+        }
+        
+        async function initializeGapiClient() {
+            const googleConfig = cloudConfig.google || {};
+            await gapi.client.init({
+                apiKey: googleConfig.apiKey,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+            });
+            gapiInited = true;
+            console.log("Client GAPI initialisé pour Google Drive.");
+        }
+
+        function handleGoogleAuthClick() {
+            const googleConfig = cloudConfig.google || {};
+            if (!googleConfig.clientId) {
+                showToast('Client ID Google manquant. Veuillez le configurer.', 'danger');
+                return;
+            }
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: googleConfig.clientId,
+                scope: googleConfig.scopes,
+                callback: (tokenResponse) => {
+                    if (tokenResponse.error) {
+                         console.error('Erreur d\'authentification Google:', tokenResponse.error);
+                         showToast(`Erreur d'authentification: ${tokenResponse.error_description}`, 'danger');
+                         return;
+                    }
+                    console.log("Authentification Google réussie.");
+                    showToast('Connecté à Google Drive avec succès!', 'success');
+                    document.getElementById('gdrive-status').textContent = 'Connecté';
+                    document.getElementById('gdrive-status').className = 'cloud-status status-connected';
+                    document.getElementById('gdrive-connect-btn').textContent = 'Changer de compte';
+                },
+            });
+
+             if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+        
+        async function uploadToGoogleDrive(fileContent, fileName) {
+            if (!gapiInited) {
+                 showToast('Le client Google API n\'est pas prêt.', 'danger');
+                 console.error("Tentative d'upload avant l'initialisation de GAPI.");
+                 return;
+            }
+            const token = gapi.client.getToken();
+            if (!token) {
+                showToast('Veuillez vous connecter à Google Drive d\'abord.', 'warning');
+                handleGoogleAuthClick(); // Prompt for login
+                return;
+            }
+
+            showToast(`Début de l'upload vers Google Drive : ${fileName}`, 'info');
+            console.log(`Début de l'upload de ${fileName} vers Google Drive.`);
+
+            const metadata = {
+                name: fileName,
+                mimeType: 'application/json',
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([fileContent], {type: 'application/json'}));
+
+            try {
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': `Bearer ${token.access_token}` }),
+                    body: form,
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('Erreur d\'upload Google Drive:', result.error);
+                    showToast(`Échec de l'upload : ${result.error.message}`, 'danger');
+                } else {
+                    console.log('Fichier uploadé avec succès :', result);
+                    showToast('Fichier sauvegardé sur Google Drive avec succès!', 'success');
+                     // Log history
+                    const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+                    history.unshift({ type: 'Google Drive', date: new Date().toISOString(), file: fileName });
+                    localStorage.setItem('backupHistory', JSON.stringify(history.slice(0, 10)));
+                }
+
+            } catch(error) {
+                console.error('Exception lors de l\'upload sur Google Drive :', error);
+                showToast(`Erreur réseau lors de l'upload: ${error.message}`, 'danger');
+            }
+        }
+
+
+        // --- Backup System Functions ---
+
+        async function backupNow() {
+             const backupData = {};
+             if(document.getElementById('includeStudentRecords').checked){
+                 backupData.students = JSON.parse(localStorage.getItem('savedStudents') || '{}');
+             }
+             if(document.getElementById('includeSettingsData').checked){
+                  backupData.settings = {
+                    logoLeft: localStorage.getItem('schoolLogoLeft'),
+                    logoRight: localStorage.getItem('schoolLogoRight'),
+                    footer: localStorage.getItem('docxFooterText')
+                };
+             }
+
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const fileName = `infohas_backup_${new Date().toISOString().slice(0,10)}.json`;
+
+            const destination = document.querySelector('input[name="backupDestination"]:checked').value;
+            const isProduction = document.getElementById('productionMode').checked;
+            
+            if (!isProduction) {
+                 console.log("--- MODE TEST ---");
+                 console.log("Destination:", destination);
+                 console.log("Nom du fichier:", fileName);
+                 console.log("Données:", backupData);
+                 showToast("Mode test: L'upload n'a pas été effectué. Vérifiez la console.", 'info');
+                 return;
+            }
+
+            switch(destination) {
+                case 'local':
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    saveAs(dataBlob, fileName);
+                    showToast('Sauvegarde locale téléchargée.', 'success');
+                     // Log history
+                    const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+                    history.unshift({ type: 'Local', date: new Date().toISOString() });
+                    localStorage.setItem('backupHistory', JSON.stringify(history.slice(0, 10)));
+                    break;
+                case 'gdrive':
+                    await uploadToGoogleDrive(dataStr, fileName);
+                    break;
+                case 'dropbox':
+                    showToast('L\'upload sur Dropbox n\'est pas encore implémenté.', 'warning');
+                    console.warn("Fonctionnalité d'upload Dropbox appelée mais non implémentée.");
+                    break;
+                case 'onedrive':
+                    showToast('L\'upload sur OneDrive n\'est pas encore implémenté.', 'warning');
+                     console.warn("Fonctionnalité d'upload OneDrive appelée mais non implémentée.");
+                    break;
+            }
+        }
+
+        function restoreFromLocal(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.students) {
+                        localStorage.setItem('savedStudents', JSON.stringify(data.students));
+                    }
+                     if (data.settings) {
+                        localStorage.setItem('schoolLogoLeft', data.settings.logoLeft || '');
+                        localStorage.setItem('schoolLogoRight', data.settings.logoRight || '');
+                        localStorage.setItem('docxFooterText', data.settings.footer || '');
+                    }
+                    loadSettings();
+                    populateAcademicYearFilter();
+                    loadSavedStudents();
+                    showToast('Données restaurées avec succès!', 'success');
+                } catch (error) {
+                    showToast('Erreur lors de la restauration: ' + error.message, 'danger');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function showBackupHistory() {
+            const history = JSON.parse(localStorage.getItem('backupHistory') || '[]');
+            const listEl = document.getElementById('backupHistoryList');
+            listEl.innerHTML = '';
+            if (history.length === 0) {
+                listEl.innerHTML = '<li class="list-group-item">Aucun historique de sauvegarde trouvé.</li>';
+            } else {
+                history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.textContent = `${item.type} - ${new Date(item.date).toLocaleString()}`;
+                    if(item.file) {
+                        li.textContent += ` (${item.file})`
+                    }
+                    const badge = document.createElement('span');
+                    const badgeClass = item.type === 'Local' ? 'success' : 'primary';
+                    badge.className = `badge bg-${badgeClass}`;
+                    badge.textContent = item.type;
+                    li.appendChild(badge);
+                    listEl.appendChild(li);
+                });
+            }
+            const modal = new bootstrap.Modal(document.getElementById('backupHistoryModal'));
+            modal.show();
+        }
+
+        function clearBackupHistory(){
+            if(confirm("Êtes-vous sûr de vouloir effacer l'historique des sauvegardes ? Cela ne supprimera aucun fichier de sauvegarde.")){
+                localStorage.setItem('backupHistory', '[]');
+                showBackupHistory();
+            }
+        }
+
+
+        function showExtractionModal(year) {
+            currentExtractionYear = year;
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const tableBody = document.getElementById('extractionTableBody');
+            tableBody.innerHTML = ''; // Clear previous entries
+
+            const studentsWithData = Object.values(savedStudents).filter(s => 
+                year === 1 ? s.modules1?.length > 0 : s.modules2?.length > 0
+            );
+
+            if (studentsWithData.length === 0) {
+                alert(`No students with module data for the ${year === 1 ? '1st' : '2nd'} year.`);
+                return;
+            }
+
+            studentsWithData.forEach(student => {
+                const row = document.createElement('tr');
+                row.dataset.studentName = student.name; // Use data attribute to identify student
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td><input type="text" class="form-control form-control-sm" value="${student.prevInscriptionAn1 || ''}"></td>
+                    <td><input type="text" class="form-control form-control-sm" value="${student.laureateCode || ''}"></td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('extractionModalTitle').textContent = `Enter Codes for ${year === 1 ? '1st' : '2nd'} Year Students`;
+            const modal = new bootstrap.Modal(document.getElementById('extractionModal'));
+            modal.show();
+        }
+
+        function saveExtractionDataAndGenerate() {
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const tableRows = document.querySelectorAll('#extractionTableBody tr');
+
+            tableRows.forEach(row => {
+                const studentName = row.dataset.studentName;
+                if (savedStudents[studentName]) {
+                    const prevInscription = row.cells[1].querySelector('input').value;
+                    const laureateCode = row.cells[2].querySelector('input').value;
+                    savedStudents[studentName].prevInscriptionAn1 = prevInscription;
+                    savedStudents[studentName].laureateCode = laureateCode;
+                }
+            });
+
+            localStorage.setItem('savedStudents', JSON.stringify(savedStudents));
+            
+            generateSummaryDocx(currentExtractionYear);
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('extractionModal'));
+            modal.hide();
+            alert('Codes saved and document generation started.');
+        }
+
+        function handleLogoUpload(event, storageKey, previewId) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoDataUrl = e.target.result;
+                localStorage.setItem(storageKey, logoDataUrl);
+                const preview = document.getElementById(previewId);
+                preview.src = logoDataUrl;
+                preview.classList.remove('d-none');
+                alert('Logo saved successfully!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function loadSettings() {
+            const savedLogoLeft = localStorage.getItem('schoolLogoLeft');
+            const savedLogoRight = localStorage.getItem('schoolLogoRight');
+            const savedFooter = localStorage.getItem('docxFooterText');
+            if (savedLogoLeft) {
+                const preview = document.getElementById('logoPreview');
+                preview.src = savedLogoLeft;
+                preview.classList.remove('d-none');
+            }
+             if (savedLogoRight) {
+                const previewRight = document.getElementById('logoPreviewRight');
+                previewRight.src = savedLogoRight;
+                previewRight.classList.remove('d-none');
+            }
+            if (savedFooter) {
+                document.getElementById('footerEditor').innerHTML = savedFooter;
+            }
+        }
+        
+        function saveFooterText() {
+            const footerText = document.getElementById('footerEditor').innerHTML;
+            localStorage.setItem('docxFooterText', footerText);
+            alert('Footer text saved successfully!');
+        }
+
+        function importStudentsFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').map(l => l.trim()).filter(Boolean);
+                    if (lines.length < 2) throw new Error("CSV file is empty or has no data rows.");
+                    
+                    const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                    const requiredHeaders = ["Nom et Prénom", "N° Inscription", "Promotion", "Date"];
+                    if (!requiredHeaders.every(h => header.includes(h))) {
+                        throw new Error(`CSV must contain the following headers: ${requiredHeaders.join(', ')}`);
+                    }
+
+                    const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+                    let importedCount = 0;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                        const studentObj = {};
+                        header.forEach((h, index) => {
+                            studentObj[h] = values[index] ? values[index].trim() : '';
+                        });
+
+                        const studentName = studentObj["Nom et Prénom"];
+                        if (studentName) {
+                            savedStudents[studentName] = {
+                                name: studentName,
+                                registration: studentObj["N° Inscription"] || '',
+                                promotion: studentObj["Promotion"] || '',
+                                date: studentObj["Date"] || '',
+                                soutenance: 0,
+                                modules1: [],
+                                modules2: [],
+                                year1: null,
+                                year2: null,
+                            };
+                            importedCount++;
+                        }
+                    }
+                    
+                    localStorage.setItem('savedStudents', JSON.stringify(savedStudents));
+                    populateAcademicYearFilter();
+                    loadSavedStudents();
+                    alert(`${importedCount} students imported successfully!`);
+
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                } finally {
+                    event.target.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function showExportByPromotionModal() {
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const promotions = [...new Set(Object.values(savedStudents).map(s => s.promotion).filter(Boolean))];
+            const select = document.getElementById('promotionSelect');
+            select.innerHTML = '';
+            if (promotions.length === 0) {
+                select.innerHTML = '<option>No promotions found</option>';
+            } else {
+                promotions.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p;
+                    option.textContent = p;
+                    select.appendChild(option);
+                });
+            }
+            const modal = new bootstrap.Modal(document.getElementById('exportPromotionModal'));
+            modal.show();
+        }
+
+        function exportByPromotion() {
+            const promotionYear = document.getElementById('promotionSelect').value;
+             if (!promotionYear || promotionYear === 'No promotions found') {
+                alert('Please select a valid promotion to export.');
+                return;
+            }
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const studentsToExport = {};
+            Object.entries(savedStudents).forEach(([name, data]) => {
+                if (data.promotion === promotionYear) {
+                    studentsToExport[name] = data;
+                }
+            });
+
+            if (Object.keys(studentsToExport).length === 0) {
+                alert(`No students found for the promotion: ${promotionYear}`);
+                return;
+            }
+
+            const dataStr = JSON.stringify(studentsToExport, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            saveAs(dataBlob, `promotion_${promotionYear.replace('/', '-')}_data.json`);
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('exportPromotionModal'));
+            modal.hide();
+        }
+        
+        function clearFormForNewStudent() {
+            document.getElementById('studentName').value = '';
+            document.getElementById('registrationNumber').value = '';
+            document.getElementById('promotion').value = '';
+            document.getElementById('date').value = 'JUILLET 2025';
+            document.getElementById('soutenance').value = '0.00';
+            modules1 = [];
+            modules2 = [];
+            renderModules(1);
+            renderModules(2);
+            calculateGrades();
+            document.getElementById('studentName').focus();
+        }
+
+        function populateAcademicYearFilter() {
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const promotions = new Set(Object.values(savedStudents).map(s => s.promotion).filter(Boolean));
+            const filterDropdown = document.getElementById('academicYearFilter');
+            while (filterDropdown.options.length > 1) {
+                filterDropdown.remove(1);
+            }
+            promotions.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                filterDropdown.appendChild(option);
+            });
+        }
+
+        function showStudentSelectionModal(exportType) {
+            currentExportType = exportType;
+            selectedStudents = [];
+            populateStudentModal();
+            const modal = new bootstrap.Modal(document.getElementById('studentSelectionModal'));
+            modal.show();
+        }
+
+        function populateStudentModal() {
+            const studentModalList = document.getElementById('studentModalList');
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const filterYear = document.getElementById('academicYearFilter').value;
+            const studentsToDisplay = Object.entries(savedStudents).filter(([name, data]) => 
+                filterYear === 'all' || data.promotion === filterYear
+            );
+            if (studentsToDisplay.length === 0) {
+                studentModalList.innerHTML = '<p class="text-center p-3">No students found for this academic year.</p>';
+                return;
+            }
+            let html = '';
+            for (const [name, data] of studentsToDisplay) {
+                const finalGrade = (data.year2?.finalGrade ?? 0).toFixed(2);
+                html += `<div class="student-item"><div class="form-check">
+                    <input class="form-check-input modal-checkbox" type="checkbox" value="${name}" id="check-${name}">
+                    <label class="form-check-label" for="check-${name}">
+                        ${name} - ${data.registration || ''} | Final: ${finalGrade}/20
+                    </label>
+                </div></div>`;
+            }
+            studentModalList.innerHTML = html;
+            studentModalList.querySelectorAll('.modal-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const studentName = this.value;
+                    if (this.checked) {
+                        if (!selectedStudents.includes(studentName)) {
+                            selectedStudents.push(studentName);
+                        }
+                    } else {
+                        selectedStudents = selectedStudents.filter(name => name !== studentName);
+                    }
+                });
+            });
+        }
+
+        function filterStudentList() {
+            const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+            document.querySelectorAll('.student-item').forEach(item => {
+                const studentName = item.querySelector('label').textContent.toLowerCase();
+                item.style.display = studentName.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        function toggleSelectAllStudents() {
+            const selectAll = document.getElementById('selectAllStudents').checked;
+            selectedStudents = [];
+            document.querySelectorAll('.student-item').forEach(item => {
+                const checkbox = item.querySelector('.modal-checkbox');
+                if (item.style.display !== 'none') {
+                    checkbox.checked = selectAll;
+                    if (selectAll) {
+                        selectedStudents.push(checkbox.value);
+                    }
+                }
+            });
+        }
+
+        function exportSelectedStudents() {
+            if (selectedStudents.length === 0) {
+                alert('Please select at least one student.');
+                return;
+            }
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            selectedStudents.forEach(studentName => {
+                const studentData = savedStudents[studentName];
+                if (studentData) {
+                    if (currentExportType === 3) {
+                        generateCompleteDocx(studentData);
+                    } else {
+                        generateDocxForStudent(studentData, currentExportType, studentName);
+                    }
+                }
+            });
+            const modal = bootstrap.Modal.getInstance(document.getElementById('studentSelectionModal'));
+            modal.hide();
+        }
+        
+        function addModule(year) {
+            const newModule = { uf: `UF${year === 1 ? modules1.length + 1 : modules2.length + 1}`, code: '', title: '', cc: 0, efcfT: 0, efcfP: 0, comment: '' };
+            if (year === 1) modules1.push(newModule);
+            else modules2.push(newModule);
+            renderModules(year);
+        }
+
+        function removeModule(year, index) {
+            if (year === 1) modules1.splice(index, 1);
+            else modules2.splice(index, 1);
+            renderModules(year);
+        }
+
+        function renderModules(year) {
+            const modules = year === 1 ? modules1 : modules2;
+            const tbody = document.querySelector(`#modulesTable${year} tbody`);
+            tbody.innerHTML = '';
+            modules.forEach((module, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="text" class="table-input" value="${module.uf}" onchange="updateModule(${year}, ${index}, 'uf', this.value)"></td>
+                    <td><input type="text" class="table-input" value="${module.code}" onchange="updateModule(${year}, ${index}, 'code', this.value)"></td>
+                    <td><input type="text" class="table-input" value="${module.title}" onchange="updateModule(${year}, ${index}, 'title', this.value)"></td>
+                    <td><input type="number" step="0.01" class="table-input" value="${module.cc}" onchange="updateModule(${year}, ${index}, 'cc', parseFloat(this.value) || 0)"></td>
+                    <td><input type="number" step="0.01" class="table-input" value="${module.efcfT}" onchange="updateModule(${year}, ${index}, 'efcfT', parseFloat(this.value) || 0)"></td>
+                    <td><input type="number" step="0.01" class="table-input" value="${module.efcfP}" onchange="updateModule(${year}, ${index}, 'efcfP', parseFloat(this.value) || 0)"></td>
+                    <td><input type="text" class="table-input" value="${module.comment}" onchange="updateModule(${year}, ${index}, 'comment', this.value)"></td>
+                    <td><button class="btn btn-sm btn-outline-danger" onclick="removeModule(${year}, ${index})">×</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateModule(year, index, field, value) {
+            if (year === 1) modules1[index][field] = value;
+            else modules2[index][field] = value;
+        }
+
+        function calculateYearResults(modules, year, year1Results = null, soutenance = 0) {
+             if (!modules || modules.length === 0) return { mcc: 0, mefcft: 0, mefcfp: 0, average: 0, finalGrade: 0 };
+            const mcc = modules.reduce((sum, m) => sum + (parseFloat(m.cc) || 0), 0) / modules.length;
+            const mefcft = modules.reduce((sum, m) => sum + (parseFloat(m.efcfT) || 0), 0) / modules.length;
+            const mefcfp = modules.reduce((sum, m) => sum + (parseFloat(m.efcfP) || 0), 0) / modules.length;
+            const average = (mcc * 3 + mefcft * 2 + mefcfp * 3) / 8;
+            let finalGrade = 0;
+            if (year1Results) {
+                const year2mcc = (year === 2) ? mcc : 0;
+                const year2mefcft = (year === 2) ? mefcft : 0;
+                const year2mefcfp = (year === 2) ? mefcfp : 0;
+                const hasYear2Modules = modules2 && modules2.length > 0;
+                const combinedCC = hasYear2Modules ? (year1Results.mcc + year2mcc) / 2 : year1Results.mcc;
+                const combinedEFCFT = hasYear2Modules ? (year1Results.mefcft + year2mefcft) / 2 : year1Results.mefcft;
+                const combinedEFCFP = hasYear2Modules ? (year1Results.mefcfp + year2mefcfp) / 2 : year1Results.mefcfp;
+                finalGrade = (combinedCC * 3 + combinedEFCFT * 2 + combinedEFCFP * 3 + parseFloat(soutenance) * 2) / 10;
+            }
+            return { mcc, mefcft, mefcfp, average, finalGrade };
+        }
+
+        function calculateGrades() {
+            const results1 = calculateYearResults(modules1, 1);
+            const soutenance = parseFloat(document.getElementById('soutenance').value) || 0;
+            const results2 = calculateYearResults(modules2, 2, results1, soutenance);
+            
+            document.getElementById('mcc1Result_preview').textContent = results1.mcc.toFixed(2);
+            document.getElementById('mefcft1Result_preview').textContent = results1.mefcft.toFixed(2);
+            document.getElementById('mefcfp1Result_preview').textContent = results1.mefcfp.toFixed(2);
+            document.getElementById('year1FinalResult_preview').textContent = `${results1.average.toFixed(2)}/20`;
+
+            document.getElementById('mcc2Result_preview').textContent = results2.mcc.toFixed(2);
+            document.getElementById('mefcft2Result_preview').textContent = results2.mefcft.toFixed(2);
+            document.getElementById('mefcfp2Result_preview').textContent = results2.mefcfp.toFixed(2);
+            document.getElementById('year2FinalResult_preview').textContent = `${results2.average.toFixed(2)}/20`;
+
+            document.getElementById('cc1Value').textContent = results1.mcc.toFixed(2);
+            document.getElementById('cc2Value').textContent = results2.mcc.toFixed(2);
+            document.getElementById('efcft1Value').textContent = results1.mefcft.toFixed(2);
+            document.getElementById('efcft2Value').textContent = results2.mefcft.toFixed(2);
+            document.getElementById('efcfp1Value').textContent = results1.mefcfp.toFixed(2);
+            document.getElementById('efcfp2Value').textContent = results2.mefcfp.toFixed(2);
+            document.getElementById('soutenanceValue').textContent = soutenance.toFixed(2);
+
+            const hasYear2Modules = modules2 && modules2.length > 0;
+            const combinedCC = hasYear2Modules ? (results1.mcc + results2.mcc) / 2 : results1.mcc;
+            const combinedEFCFT = hasYear2Modules ? (results1.mefcft + results2.mefcft) / 2 : results1.mefcft;
+            const combinedEFCFP = hasYear2Modules ? (results1.mefcfp + results2.mefcfp) / 2 : results1.mefcfp;
+            document.getElementById('ccCombined').textContent = combinedCC.toFixed(2);
+            document.getElementById('efcftCombined').textContent = combinedEFCFT.toFixed(2);
+            document.getElementById('efcfpCombined').textContent = combinedEFCFP.toFixed(2);
+            document.getElementById('soutenanceCombined').textContent = soutenance.toFixed(2);
+
+            const ccWeighted = combinedCC * 3, efcftWeighted = combinedEFCFT * 2, efcfpWeighted = combinedEFCFP * 3, soutenanceWeighted = soutenance * 2;
+            document.getElementById('ccWeighted').textContent = ccWeighted.toFixed(2);
+            document.getElementById('efcftWeighted').textContent = efcftWeighted.toFixed(2);
+            document.getElementById('efcfpWeighted').textContent = efcfpWeighted.toFixed(2);
+            document.getElementById('soutenanceWeighted').textContent = soutenanceWeighted.toFixed(2);
+
+            const totalWeighted = (ccWeighted + efcftWeighted + efcfpWeighted + soutenanceWeighted) / 10;
+            document.getElementById('totalWeighted').textContent = totalWeighted.toFixed(2);
+
+            document.getElementById('finalGradeResult').innerHTML = `<strong>Final Grade: ${totalWeighted.toFixed(2)}/20</strong>`;
+            document.getElementById('finalGradeResult_preview').innerHTML = `<strong>Final Grade: ${totalWeighted.toFixed(2)}/20</strong>`;
+        }
+
+        function saveStudent() {
+            const studentName = document.getElementById('studentName').value.trim();
+            if (!studentName) return alert('Please enter a student name');
+            
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const soutenance = parseFloat(document.getElementById('soutenance').value) || 0;
+            const results1 = calculateYearResults(modules1, 1);
+            const studentData = {
+                name: studentName,
+                registration: document.getElementById('registrationNumber').value,
+                promotion: document.getElementById('promotion').value,
+                date: document.getElementById('date').value,
+                soutenance: soutenance,
+                modules1: [...modules1],
+                modules2: [...modules2],
+                year1: results1,
+                year2: calculateYearResults(modules2, 2, results1, soutenance)
+            };
+            savedStudents[studentName] = studentData;
+            localStorage.setItem('savedStudents', JSON.stringify(savedStudents));
+            
+            populateAcademicYearFilter();
+            loadSavedStudents(document.getElementById('academicYearFilter').value);
+            alert('Student saved successfully!');
+        }
+
+        function loadSavedStudents(promotionYear = 'all') {
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const studentsList = document.getElementById('savedStudentsList');
+            
+            const filteredStudents = Object.entries(savedStudents).filter(([name, data]) => 
+                promotionYear === 'all' || data.promotion === promotionYear
+            );
+
+            if (filteredStudents.length === 0) {
+                studentsList.innerHTML = '<p class="text-muted text-center">No students saved for this year.</p>';
+                return;
+            }
+
+            let html = '';
+            for (const [name, data] of filteredStudents) {
+                const finalGrade = (data.year2?.finalGrade || 0).toFixed(2);
+                html += `
+                    <div class="student-card p-2 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${name}</h6>
+                                <small class="text-muted">Reg: ${data.registration || 'N/A'} | Final: ${finalGrade}/20</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="loadStudent('${name}')">Load</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent('${name}')">Del</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            studentsList.innerHTML = html;
+        }
+
+        function loadStudent(name) {
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const data = savedStudents[name];
+            if (!data) return;
+
+            document.getElementById('studentName').value = data.name || '';
+            document.getElementById('registrationNumber').value = data.registration || '';
+            document.getElementById('promotion').value = data.promotion || '';
+            document.getElementById('date').value = data.date || '';
+            document.getElementById('soutenance').value = data.soutenance || 0;
+            modules1 = data.modules1 || [];
+            modules2 = data.modules2 || [];
+
+            renderModules(1);
+            renderModules(2);
+            calculateGrades();
+        }
+
+        function deleteStudent(name) {
+            if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+            const savedStudents = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            delete savedStudents[name];
+            localStorage.setItem('savedStudents', JSON.stringify(savedStudents));
+            populateAcademicYearFilter();
+            loadSavedStudents(document.getElementById('academicYearFilter').value);
+        }
+
+        function convertHtmlToDocxObjects(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div>${htmlString}</div>`, 'text/html');
+            const paragraphs = [];
+
+            function processNode(node) {
+                let runs = [];
+                for (const childNode of node.childNodes) {
+                    if (childNode.nodeType === Node.TEXT_NODE) {
+                         runs.push(new docx.TextRun(childNode.textContent));
+                    } else if (childNode.nodeType === Node.ELEMENT_NODE) {
+                       let style = {};
+                        if (childNode.tagName === 'B' || childNode.tagName === 'STRONG') {
+                            style.bold = true;
+                        }
+                        if (childNode.tagName === 'I' || childNode.tagName === 'EM') {
+                            style.italics = true;
+                        }
+                        if (childNode.tagName === 'U') {
+                           style.underline = {};
+                        }
+                        
+                        const childRuns = processNode(childNode);
+                        childRuns.forEach(run => {
+                           if(run.options){
+                               Object.assign(run.options, style);
+                           } else {
+                               run.options = style;
+                           }
+                        });
+                        runs.push(...childRuns);
+                    }
+                }
+                return runs;
+            }
+
+            for(const p of doc.body.children){
+                 paragraphs.push(new docx.Paragraph({
+                    children: processNode(p),
+                    alignment: docx.AlignmentType.CENTER // Default to center for footer
+                }));
+            }
+             if(doc.body.children.length === 0 && doc.body.textContent){
+                 paragraphs.push(new docx.Paragraph({
+                    children: processNode(doc.body),
+                    alignment: docx.AlignmentType.CENTER 
+                }));
+            }
+
+            return paragraphs;
+        }
+        
+        async function createDocxHeader() {
+            let headerChildren = [];
+            const logoLeftBase64 = localStorage.getItem('schoolLogoLeft');
+            const logoRightBase64 = localStorage.getItem('schoolLogoRight');
+            let leftLogoImage, rightLogoImage;
+
+            if (logoLeftBase64) {
+                const response = await fetch(logoLeftBase64);
+                const imageBuffer = await response.arrayBuffer();
+                leftLogoImage = new docx.ImageRun({ data: imageBuffer, transformation: { width: 190, height: 88 } });
+            }
+
+            if (logoRightBase64) {
+                const response = await fetch(logoRightBase64);
+                const imageBuffer = await response.arrayBuffer();
+                rightLogoImage = new docx.ImageRun({ data: imageBuffer, transformation: { width: 90, height: 88 } });
+            }
+
+            const logoTable = new docx.Table({
+                width: { size: 100, type: docx.WidthType.PERCENTAGE },
+                borders: docx.TableBorders.NONE,
+                rows: [new docx.TableRow({
+                    children: [
+                        new docx.TableCell({
+                            children: [leftLogoImage ? new docx.Paragraph({ children: [leftLogoImage] }) : new docx.Paragraph('')],
+                            width: { size: 50, type: docx.WidthType.PERCENTAGE }
+                        }),
+                        new docx.TableCell({
+                            children: [rightLogoImage ? new docx.Paragraph({ children: [rightLogoImage], alignment: docx.AlignmentType.RIGHT }) : new docx.Paragraph('')],
+                            width: { size: 50, type: docx.WidthType.PERCENTAGE }
+                        })
+                    ]
+                })]
+            });
+            headerChildren.push(logoTable);
+            return headerChildren;
+        }
+
+        function makeHeaderCell(text, options = {}) {
+            return new docx.TableCell({
+                children: [new docx.Paragraph({ 
+                    children: [new docx.TextRun({ text: String(text), bold: true })],
+                    alignment: docx.AlignmentType.CENTER 
+                })],
+                shading: { fill: "D3D3D3", val: docx.ShadingType.CLEAR, color: "auto" },
+                verticalAlign: docx.VerticalAlign.CENTER,
+                ...options
+            });
+        }
+
+       async function generateDocxForStudent(studentData, yearType, studentName) {
+            try {
+                const { registration, promotion, date, soutenance, modules1, modules2 } = studentData;
+                const results1 = calculateYearResults(modules1 || [], 1);
+                const results2 = calculateYearResults(modules2 || [], 2, results1, soutenance);
+                let fileName = '', transcriptTitle = '';
+
+                const headerChildren = await createDocxHeader();
+                
+                let footerChildren = [];
+                const footerHtml = localStorage.getItem('docxFooterText');
+                if (footerHtml) {
+                     footerChildren = convertHtmlToDocxObjects(footerHtml);
+                }
+
+                let bodyChildren = [];
+                if (yearType === 1) {
+                    transcriptTitle = "RELEVE DE NOTES - 1ère ANNÉE";
+                    fileName = `${studentName.replace(/\s+/g, '_')}_1st_Year_Transcript.docx`;
+                } else if (yearType === 2) {
+                    transcriptTitle = "RELEVE DE NOTES - 2ème ANNÉE";
+                    fileName = `${studentName.replace(/\s+/g, '_')}_2nd_Year_Transcript.docx`;
+                }
+
+                bodyChildren.push(new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, spacing: { after: 400 }, children: [new docx.TextRun({ text: transcriptTitle, bold: true, size: 24, allCaps: true })] }));
+                bodyChildren.push(
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: `NOM ET PRENOM: ${studentName}`, bold: true })] }),
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: `DATE: ${date}`, bold: true })] }),
+                    new docx.Paragraph({ children: [new docx.TextRun({ text: `N° INSCRIPTION: ${registration}`, bold: true })] }),
+                    new docx.Paragraph({ spacing: { after: 400 }, children: [new docx.TextRun({ text: `PROMOTION: ${promotion}`, bold: true })] })
+                );
+
+                if (yearType === 1 && modules1 && modules1.length > 0) {
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 400, after: 200 }, children: [new docx.TextRun({ text: "1ère ANNÉE", bold: true, size: 24 })] }));
+                    const year1Rows = [new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("UF"), makeHeaderCell("Module"), makeHeaderCell("CC"), makeHeaderCell("EFCF T"), makeHeaderCell("EFCF P"), makeHeaderCell("Commentaires")] })];
+                    modules1.forEach(m => year1Rows.push(new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(m.uf)] }), new docx.TableCell({ children: [new docx.Paragraph(`${m.code} - ${m.title}`)] }), new docx.TableCell({ children: [new docx.Paragraph(m.cc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfT.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfP.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.comment)] })] })));
+                    bodyChildren.push(new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: year1Rows }));
+                    const year1ResultHeader = new docx.TableRow({ children: [makeHeaderCell("MCC1"), makeHeaderCell("MEFCFT1"), makeHeaderCell("MEFCFP1"), makeHeaderCell("Moyenne 1ère Année")] });
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 200, after: 200 }, children: [new docx.TextRun({ text: "Résultats 1ère Année:", bold: true })] }), new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: [year1ResultHeader, new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(results1.mcc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results1.mefcft.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results1.mefcfp.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(`${results1.average.toFixed(2)}/20`)] })] })] }));
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 200, after: 200 }, children: [new docx.TextRun({ text: "Décision / Commentaires: 1ère ANNÉE RÉUSSIE / Admis(e) en 2ème Année", bold: true })] }));
+
+                } else if (yearType === 2 && modules2 && modules2.length > 0) {
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 400, after: 200 }, children: [new docx.TextRun({ text: "2ème ANNÉE", bold: true, size: 24 })] }));
+                    const year2Rows = [new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("UF"), makeHeaderCell("Module"), makeHeaderCell("CC"), makeHeaderCell("EFCF T"), makeHeaderCell("EFCF P"), makeHeaderCell("Commentaires")] })];
+                    modules2.forEach(m => year2Rows.push(new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(m.uf)] }), new docx.TableCell({ children: [new docx.Paragraph(`${m.code} - ${m.title}`)] }), new docx.TableCell({ children: [new docx.Paragraph(m.cc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfT.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfP.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.comment)] })] })));
+                    bodyChildren.push(new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: year2Rows }));
+                    const year2ResultHeader = new docx.TableRow({ children: [makeHeaderCell("MCC2"), makeHeaderCell("MEFCFT2"), makeHeaderCell("MEFCFP2"), makeHeaderCell("Moyenne P"), makeHeaderCell("Soutenance"), makeHeaderCell("Note Finale")] });
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 200, after: 200 }, children: [new docx.TextRun({ text: "Résultats 2ème Année:", bold: true })] }), new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: [year2ResultHeader, new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(results2.mcc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.mefcft.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.mefcfp.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.average.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(soutenance.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(`${results2.finalGrade.toFixed(2)}/20`)] })] }), new docx.TableRow({ children: [new docx.TableCell({ columnSpan: 6, children: [new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [new docx.TextRun({ text: "Final Grade = (Combined CC x 3 + Combined EFCF T x 2 + Combined EFCF P x 3 + Soutenance x 2) / 10", bold: true, size: 14 })] }), new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [new docx.TextRun({ text: `Final Grade: ${results2.finalGrade.toFixed(2)}/20`, bold: true, size: 16 })] })] })] })] }));
+                    bodyChildren.push(new docx.Paragraph({ spacing: { before: 200, after: 200 }, children: [new docx.TextRun({ text: "Décision / Commentaires: 2ème Année Réussite / Lauréat (e)", bold: true })] }));
+                }
+                
+                const signatureTable = new docx.Table({
+                    width: { size: 100, type: docx.WidthType.PERCENTAGE },
+                    borders: docx.TableBorders.NONE,
+                    rows: [new docx.TableRow({
+                        children: [
+                            new docx.TableCell({
+                                children: [new docx.Paragraph({ spacing: { before: 600 }, children: [new docx.TextRun({ text: "Directrice Pédagogique", bold: true })] })],
+                                width: { size: 50, type: docx.WidthType.PERCENTAGE },
+                            }),
+                            new docx.TableCell({
+                                children: [new docx.Paragraph({ alignment: docx.AlignmentType.RIGHT, spacing: { before: 600 }, children: [new docx.TextRun({ text: "Président Jury d'Examens", bold: true })] })],
+                                 width: { size: 50, type: docx.WidthType.PERCENTAGE },
+                            })
+                        ]
+                    })]
+                });
+                bodyChildren.push(signatureTable);
+
+                const doc = new docx.Document({
+                    sections: [{
+                        properties: { page: { margin: { header: 181, footer: 397, left: 851, right: 851 } } },
+                        headers: { default: new docx.Header({ children: headerChildren }) },
+                        footers: { default: new docx.Footer({ children: footerChildren }) },
+                        children: bodyChildren
+                    }]
+                });
+
+                docx.Packer.toBlob(doc).then(blob => { saveAs(blob, fileName); }).catch(err => { console.error('Error generating DOCX:', err); alert('Error generating DOCX: ' + err.message); });
+            } catch (error) {
+                console.error('Error in generateDocxForStudent:', error);
+                alert('Error generating DOCX: ' + error.message);
+            }
+        }
+        
+        async function generateCompleteDocx(studentData) {
+            if (!studentData) return;
+            const { name, registration, promotion, date, soutenance, modules1, modules2 } = studentData;
+            const studentName = name;
+            const results1 = calculateYearResults(modules1, 1);
+            const results2 = calculateYearResults(modules2, 2, results1, soutenance);
+            
+            const headerChildren = await createDocxHeader();
+            
+            let footerChildren = [];
+             const footerHtml = localStorage.getItem('docxFooterText');
+            if (footerHtml) {
+                footerChildren = convertHtmlToDocxObjects(footerHtml);
+            }
+            
+            let bodyChildren = [];
+            bodyChildren.push(
+                new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, spacing: { after: 400 }, children: [new docx.TextRun({ text: "RELEVE DE NOTES - COMPLETE", bold: true, size: 24, allCaps: true })] }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: `NOM ET PRENOM: ${studentName}`, bold: true })] }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: `DATE: ${date}`, bold: true })] }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: `N° INSCRIPTION: ${registration}`, bold: true })] }),
+                new docx.Paragraph({ spacing: { after: 400 }, children: [new docx.TextRun({ text: `PROMOTION: ${promotion}`, bold: true })] })
+            );
+
+            if (modules1 && modules1.length > 0) {
+                bodyChildren.push(new docx.Paragraph({ spacing: { before: 400, after: 200 }, children: [new docx.TextRun({ text: "1ère ANNÉE", bold: true, size: 24 })] }));
+                const year1ModuleRows = [new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("UF"), makeHeaderCell("Module"), makeHeaderCell("CC"), makeHeaderCell("EFCF T"), makeHeaderCell("EFCF P"), makeHeaderCell("Commentaires")] })];
+                modules1.forEach(m => year1ModuleRows.push(new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(m.uf)] }), new docx.TableCell({ children: [new docx.Paragraph(`${m.code} - ${m.title}`)] }), new docx.TableCell({ children: [new docx.Paragraph(m.cc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfT.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfP.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.comment)] })] })));
+                bodyChildren.push(new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, rows: year1ModuleRows }));
+            }
+            if (modules2 && modules2.length > 0) {
+                bodyChildren.push(new docx.Paragraph({ spacing: { before: 400, after: 200 }, children: [new docx.TextRun({ text: "2ème ANNÉE", bold: true, size: 24 })] }));
+                const year2ModuleRows = [new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("UF"), makeHeaderCell("Module"), makeHeaderCell("CC"), makeHeaderCell("EFCF T"), makeHeaderCell("EFCF P"), makeHeaderCell("Commentaires")] })];
+                modules2.forEach(m => year2ModuleRows.push(new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(m.uf)] }), new docx.TableCell({ children: [new docx.Paragraph(`${m.code} - ${m.title}`)] }), new docx.TableCell({ children: [new docx.Paragraph(m.cc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfT.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.efcfP.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(m.comment)] })] })));
+                bodyChildren.push(new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, rows: year2ModuleRows }));
+            }
+            bodyChildren.push(
+                new docx.Paragraph({ spacing: { before: 400, after: 200 }, children: [new docx.TextRun({ text: "RÉSULTATS FINAUX", bold: true, size: 20 })] }),
+                new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: [new docx.TableRow({ children: [makeHeaderCell("MCC1"), makeHeaderCell("MEFCFT1"), makeHeaderCell("MEFCFP1"), makeHeaderCell("Moyenne 1ère Année")] }), new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(results1.mcc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results1.mefcft.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results1.mefcfp.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(`${results1.average.toFixed(2)}/20`)] })] })] }),
+                new docx.Paragraph({ spacing: { before: 200 } }),
+                new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows: [new docx.TableRow({ children: [makeHeaderCell("MCC2"), makeHeaderCell("MEFCFT2"), makeHeaderCell("MEFCFP2"), makeHeaderCell("Moyenne P"), makeHeaderCell("Soutenance"), makeHeaderCell("Note Finale")] }), new docx.TableRow({ children: [new docx.TableCell({ children: [new docx.Paragraph(results2.mcc.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.mefcft.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.mefcfp.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(results2.average.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph(soutenance.toFixed(2))] }), new docx.TableCell({ children: [new docx.Paragraph({ children: [new docx.TextRun({ text: `${results2.finalGrade.toFixed(2)}/20`, bold: true })] })] })] })] })
+            );
+
+            const signatureTable = new docx.Table({
+                width: { size: 100, type: docx.WidthType.PERCENTAGE },
+                borders: docx.TableBorders.NONE,
+                rows: [new docx.TableRow({
+                    children: [
+                        new docx.TableCell({
+                            children: [new docx.Paragraph({ spacing: { before: 600 }, children: [new docx.TextRun({ text: "Directrice Pédagogique", bold: true })] })],
+                            width: { size: 50, type: docx.WidthType.PERCENTAGE },
+                        }),
+                        new docx.TableCell({
+                            children: [new docx.Paragraph({ alignment: docx.AlignmentType.RIGHT, spacing: { before: 600 }, children: [new docx.TextRun({ text: "Président Jury d'Examens", bold: true })] })],
+                             width: { size: 50, type: docx.WidthType.PERCENTAGE },
+                        })
+                    ]
+                })]
+            });
+            bodyChildren.push(signatureTable);
+
+            const doc = new docx.Document({
+                sections: [{
+                    properties: { page: { margin: { header: 181, footer: 397, left: 851, right: 851 } } },
+                    headers: { default: new docx.Header({ children: headerChildren }) },
+                    footers: { default: new docx.Footer({ children: footerChildren }) },
+                    children: bodyChildren
+                }]
+            });
+
+            const fileName = `${studentName.replace(/\s+/g, '_')}_Complete_Transcript.docx`;
+            docx.Packer.toBlob(doc).then(blob => { saveAs(blob, fileName); }).catch(err => { console.error('Error generating DOCX:', err); alert('Error generating DOCX: ' + err.message); });
+        }
+        
+        function exportAllData() {
+            const savedStudents = localStorage.getItem('savedStudents') || '{}';
+            const dataBlob = new Blob([savedStudents], { type: 'application/json' });
+            saveAs(dataBlob, 'all_students_data.json');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    JSON.parse(e.target.result); 
+                    localStorage.setItem('savedStudents', e.target.result);
+                    populateAcademicYearFilter();
+                    loadSavedStudents();
+                    alert('Data imported successfully!');
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        function splitNomPrenom(fullName){ if(!fullName) return { nom:'', prenom:'' }; const parts=fullName.trim().split(/\s+/); if(parts.length===1) return { nom:parts[0], prenom:'' }; const prenom=parts.pop(); return { nom:parts.join(' '), prenom }; }
+        function safe2(n){ return (Number(n)||0).toFixed(2); }
+        function calcYear1FromStudent(s) { let y1 = s.year1; if (!y1 || typeof y1.mcc !== 'number') { const mods = s.modules1 || []; if (mods.length) { const mcc = mods.reduce((a, m) => a + (Number(m.cc) || 0), 0) / mods.length; const mefcft = mods.reduce((a, m) => a + (Number(m.efcfT) || 0), 0) / mods.length; const mefcfp = mods.reduce((a, m) => a + (Number(m.efcfP) || 0), 0) / mods.length; const average = (mcc * 3 + mefcft * 2 + mefcfp * 3) / 8; y1 = { mcc, mefcft, mefcfp, average }; } else { y1 = { mcc: 0, mefcft: 0, mefcfp: 0, average: 0 }; } } const wcc = y1.mcc * 0.30; const wet = y1.mefcft * 0.20; const wep = y1.mefcfp * 0.30; const moyenne = (wcc + wet + wep) / 0.80; return { ...y1, wcc, wet, wep, moyenne }; }
+        function calcYear2FromStudent(s) { const y1 = calcYear1FromStudent(s); let y2 = s.year2; if (!y2 || typeof y2.mcc !== 'number') { const mods = s.modules2 || []; if (mods.length) { const mcc = mods.reduce((a, m) => a + (Number(m.cc) || 0), 0) / mods.length; const mefcft = mods.reduce((a, m) => a + (Number(m.efcfT) || 0), 0) / mods.length; const mefcfp = mods.reduce((a, m) => a + (Number(m.efcfP) || 0), 0) / mods.length; const average = (mcc * 3 + mefcft * 2 + mefcfp * 3) / 8; y2 = { mcc, mefcft, mefcfp, average }; } else { y2 = { mcc: 0, mefcft: 0, mefcfp: 0, average: 0 }; } } const hasYear2Modules = s.modules2 && s.modules2.length > 0; const combinedCC = hasYear2Modules ? (y1.mcc + y2.mcc) / 2 : y1.mcc; const combinedEFCFT = hasYear2Modules ? (y1.mefcft + y2.mefcft) / 2 : y1.mefcft; const combinedEFCFP = hasYear2Modules ? (y1.mefcfp + y2.mefcfp) / 2 : y1.mefcfp; const sout = Number(s.soutenance || 0); const finalGrade = (combinedCC * 3 + combinedEFCFT * 2 + combinedEFCFP * 3 + sout * 2) / 10; const wcc = combinedCC * 0.30; const wet = combinedEFCFT * 0.20; const wep = combinedEFCFP * 0.30; const wsout = sout * 0.20; return { y1, y2, combinedCC, combinedEFCFT, combinedEFCFP, finalGrade, wcc, wet, wep, wsout }; }
+        function makeCell(text, opts={}){ const children = Array.isArray(text)?text:[ new docx.Paragraph({ children:[ new docx.TextRun(String(text)) ] }) ]; return new docx.TableCell({ children, ...opts }); }
+        
+        async function generateSummaryDocx(year) {
+            const saved = JSON.parse(localStorage.getItem('savedStudents')) || {};
+            const students = Object.values(saved).filter(s => year === 1 ? s.modules1?.length : s.modules2?.length);
+            if (!students.length) {
+                alert('No saved students with module data for this year');
+                return;
+            }
+            students.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            const headerChildren = await createDocxHeader();
+            headerChildren.push(
+                new docx.Paragraph({ children: [new docx.TextRun({ text: 'Code EFP :', size: 20 }), new docx.TextRun({ text: ' 21/DFPP/K0183/105  ', size: 20, bold: true })] }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: 'Nom EFP : INFOHAS  ', size: 20 }), new docx.TextRun({ text: 'Niveau de formation : TECHNICIEN', size: 20 })] }),
+                new docx.Paragraph({ children: [new docx.TextRun({ text: 'Filière : Accueil dans les Transports Aérien et Maritime  ', size: 20 }), new docx.TextRun({ text: `Année de formation : ${students[0].promotion || ''}`, size: 20 })] })
+            );
+
+            let bodyChildren = [];
+            bodyChildren.push(new docx.Paragraph({ spacing: { after: 200 }, alignment: docx.AlignmentType.CENTER, children: [new docx.TextRun({ text: year === 1 ? 'Résultats obtenus par les stagiaires en première année de formation' : 'Résultats obtenus par les stagiaires en deuxième année de formation', size: 24, bold: true })] }));
+
+            const rows = [];
+            if (year === 1) {
+                rows.push(new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("N° d'inscription en 1ère année de l'année (antérieure)", { rowSpan: 2 }), makeHeaderCell('Code du lauréat', { rowSpan: 2 }), makeHeaderCell('Nom', { rowSpan: 2 }), makeHeaderCell('Prénom', { rowSpan: 2 }), makeHeaderCell('Contrôles continus (CC)', { columnSpan: 2 }), makeHeaderCell('Epreuves théoriques (ET)', { columnSpan: 2 }), makeHeaderCell('Epreuves pratiques (EP)', { columnSpan: 2 }), makeHeaderCell('Moyenne générale P', { rowSpan: 2 }), makeHeaderCell('Résultats', { rowSpan: 2 })] }));
+                rows.push(new docx.TableRow({ tableHeader: true, children: [makeHeaderCell('Moy C.C'), makeHeaderCell('Moy C.C*30%'), makeHeaderCell('Moy ET'), makeHeaderCell('Moy ET*20%'), makeHeaderCell('Moy EP'), makeHeaderCell('Moy EP*30%')] }));
+                students.forEach(s => { const { nom, prenom } = splitNomPrenom(s.name || ''); const y = calcYear1FromStudent(s); const resultText = (y.moyenne >= 10) ? 'Réussie 1ère Année' : 'Échec'; rows.push(new docx.TableRow({ children: [makeCell(s.prevInscriptionAn1 || ''), makeCell(s.laureateCode || ''), makeCell(nom), makeCell(prenom), makeCell(safe2(y.mcc)), makeCell(safe2(y.wcc)), makeCell(safe2(y.mefcft)), makeCell(safe2(y.wet)), makeCell(safe2(y.mefcfp)), makeCell(safe2(y.wep)), makeCell(safe2(y.moyenne)), makeCell(resultText)] })); });
+            } else {
+                rows.push(new docx.TableRow({ tableHeader: true, children: [makeHeaderCell("N° d'inscription en 1ère année de l'année (antérieure)", { rowSpan: 2 }), makeHeaderCell('Code du lauréat', { rowSpan: 2 }), makeHeaderCell('Nom', { rowSpan: 2 }), makeHeaderCell('Prénom', { rowSpan: 2 }), makeHeaderCell('Contrôles continus combinés (CC)', { columnSpan: 2 }), makeHeaderCell('Epreuves théoriques combinées (ET)', { columnSpan: 2 }), makeHeaderCell('Epreuves pratiques combinées (EP)', { columnSpan: 2 }), makeHeaderCell('Soutenance', { columnSpan: 2 }), makeHeaderCell('Note Finale', { rowSpan: 2 }), makeHeaderCell('Résultats', { rowSpan: 2 })] }));
+                rows.push(new docx.TableRow({ tableHeader: true, children: [makeHeaderCell('Moy CC'), makeHeaderCell('CC*30%'), makeHeaderCell('Moy ET'), makeHeaderCell('ET*20%'), makeHeaderCell('Moy EP'), makeHeaderCell('EP*30%'), makeHeaderCell('Note'), makeHeaderCell('S*20%')] }));
+                students.forEach(s => { const { nom, prenom } = splitNomPrenom(s.name || ''); const r = calcYear2FromStudent(s); const resultText = (r.finalGrade >= 10) ? 'Réussie 2ème Année' : 'Échec'; rows.push(new docx.TableRow({ children: [makeCell(s.prevInscriptionAn1 || ''), makeCell(s.laureateCode || ''), makeCell(nom), makeCell(prenom), makeCell(safe2(r.combinedCC)), makeCell(safe2(r.wcc)), makeCell(safe2(r.combinedEFCFT)), makeCell(safe2(r.wet)), makeCell(safe2(r.combinedEFCFP)), makeCell(safe2(r.wep)), makeCell(safe2((s.soutenance || 0))), makeCell(safe2(r.wsout)), makeCell(safe2(r.finalGrade)), makeCell(resultText)] })); });
+            }
+
+            const table = new docx.Table({ width: { size: 100, type: docx.WidthType.PERCENTAGE }, borders: docx.TableBorders.ALL, rows });
+            bodyChildren.push(table);
+            
+             const signatureTable = new docx.Table({
+                width: { size: 100, type: docx.WidthType.PERCENTAGE },
+                borders: docx.TableBorders.NONE,
+                rows: [new docx.TableRow({
+                    children: [
+                        new docx.TableCell({
+                            children: [new docx.Paragraph({ text: "Président de Jury", alignment: docx.AlignmentType.LEFT })],
+                            width: { size: 25, type: docx.WidthType.PERCENTAGE },
+                        }),
+                        new docx.TableCell({
+                            children: [new docx.Paragraph({ text: "Membre Professionnel    Membre Formateur    Membre Formateur", alignment: docx.AlignmentType.CENTER })],
+                            width: { size: 30.33, type: docx.WidthType.PERCENTAGE },
+                        }),
+                        new docx.TableCell({
+                            children: [new docx.Paragraph({ text: "Représentant DFP", alignment: docx.AlignmentType.RIGHT })],
+                            width: { size: 25, type: docx.WidthType.PERCENTAGE },
+                        })
+                    ]
+                })]
+            });
+            bodyChildren.push(new docx.Paragraph({spacing: {before: 300}}));
+            bodyChildren.push(signatureTable);
+            
+            const doc = new docx.Document({
+                sections: [{
+                    properties: { page: { size: { width: 16838, height: 11906 }, margin: { top: 720, right: 851, bottom: 720, left: 851, header: 181, footer: 397 } } },
+                    headers: { default: new docx.Header({ children: headerChildren }) },
+                    footers: { default: new docx.Footer({ children: [] }) },
+                    children: bodyChildren
+                }]
+            });
+            const fileName = year === 1 ? 'Table-1ere-Annee-INFOHAS.docx' : 'Table-2eme-Annee-INFOHAS.docx';
+            docx.Packer.toBlob(doc).then(blob => { saveAs(blob, fileName); }).catch(err => { console.error(err); alert('Erreur génération DOCX: ' + err.message); });
+        }
+        
+    </script>
+</body>
+</html>
+
