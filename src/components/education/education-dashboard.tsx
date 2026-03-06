@@ -298,7 +298,7 @@ export function EducationDashboard() {
   const [logFilters, setLogFilters] = useState({
     startDate: "",
     endDate: "",
-    status: "",
+    status: "all",
   });
 
   
@@ -465,7 +465,7 @@ export function EducationDashboard() {
       const params = new URLSearchParams();
       if (logFilters.startDate) params.append("startDate", logFilters.startDate);
       if (logFilters.endDate) params.append("endDate", logFilters.endDate);
-      if (logFilters.status) params.append("status", logFilters.status);
+      if (logFilters.status && logFilters.status !== "all") params.append("status", logFilters.status);
 
       const res = await fetch(`/api/education/communication-logs?${params.toString()}`);
       if (res.ok) {
@@ -2239,7 +2239,7 @@ export function EducationDashboard() {
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
                       <SelectItem value="sent">Sent</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                       <SelectItem value="failed">Failed</SelectItem>
@@ -3034,7 +3034,7 @@ export function EducationDashboard() {
               <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                 <SelectTrigger><SelectValue placeholder="Choose a template or write custom" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Custom Message</SelectItem>
+                  <SelectItem value="custom">Custom Message</SelectItem>
                   {templates.map(t => (
                     <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}

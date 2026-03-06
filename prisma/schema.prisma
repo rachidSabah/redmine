@@ -1654,6 +1654,7 @@ model EduClass {
   isActive        Boolean  @default(true)
   
   students        Student[]
+  monthlySchedules MonthlySchedule[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1708,6 +1709,8 @@ model Student {
   grades          StudentGrade[]
   attendance      StudentAttendance[]
   communicationLogs CommunicationLog[]
+  yearRecords     StudentYearRecord[]
+  graduateRecord  GraduateRecord?
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1742,6 +1745,7 @@ model Teacher {
   status          String   @default("active") // active, on_leave, resigned, terminated
   
   classes         EduClass[]  // Classes they teach
+  scheduleEntries ScheduleEntry[]
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1750,6 +1754,43 @@ model Teacher {
   @@index([organizationId])
   @@index([status])
   @@map("teachers")
+}
+
+// =====================================================
+// EDUCATION MODULE (Subject/Course)
+// =====================================================
+
+model EduModule {
+  id              String    @id @default(cuid())
+  organizationId  String
+  
+  code            String    // e.g., "MATH101", "AVI201"
+  name            String    // e.g., "Mathematics", "Aviation Safety"
+  description     String?
+  
+  // Year of study this module belongs to
+  studyYear       Int       @default(1)  // 1 = First Year, 2 = Second Year
+  
+  // Duration and credits
+  durationHours   Int?      // Total hours for this module
+  credits         Float?
+  
+  // Additional info
+  color           String?   // For calendar display
+  category        String?   // e.g., "Core", "Elective", "Practical"
+  
+  isActive        Boolean   @default(true)
+  
+  scheduleEntries ScheduleEntry[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([isActive])
+  @@index([studyYear])
+  @@map("edu_modules")
 }
 
 model StudentGrade {
@@ -2025,6 +2066,7 @@ model AcademicYear {
   
   // Terms/Semesters
   terms             AcademicTerm[]
+  studentYearRecords StudentYearRecord[]
   
   isCurrent         Boolean   @default(false)
   
@@ -2242,4 +2284,286 @@ model StaffTask {
   @@index([assignedTo])
   @@index([status])
   @@map("staff_tasks")
+}
+
+// =====================================================
+// CLASSROOM / ROOM MANAGEMENT
+// =====================================================
+
+model Classroom {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  name              String    // Room 1, Room 2, etc.
+  code              String?   // R1, R2, etc.
+  capacity          Int       @default(30)
+  building          String?
+  floor             String?
+  
+  facilities        Json?     // ["projector", "whiteboard", "computers"]
+  
+  isActive          Boolean   @default(true)
+  
+  scheduleEntries   ScheduleEntry[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("classrooms")
+}
+
+// =====================================================
+// STUDENT STATUS & PROMOTION MANAGEMENT
+// =====================================================
+
+enum StudentStatus {
+  ACTIVE            // Currently enrolled
+  PROMOTED          // Promoted to next year
+  SECOND_SESSION    // Needs second session exam
+  FAILED            // Failed the year
+  TERMINATED        // Disciplinary or other termination
+  GRADUATED         // Successfully graduated
+  ARCHIVED          // Archived (past student)
+  TRANSFERRED       // Transferred to another school
+}
+
+model StudentYearRecord {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  studentId         String
+  student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  academicYearId    String
+  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
+  
+  classId           String?
+  
+  // Year information
+  studyYear         Int       @default(1)  // 1 = First Year, 2 = Second Year
+  enrollmentDate    DateTime  @default(now())
+  
+  // Status at end of year
+  yearStatus        StudentStatus @default(ACTIVE)
+  statusChangedAt   DateTime?
+  statusChangedBy   String?   // User who changed the status
+  statusNotes       String?
+  
+  // Academic results
+  finalGrade        Float?
+  finalGradeLetter  String?   // A, B, C, etc.
+  passedModules     Int       @default(0)
+  failedModules     Int       @default(0)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([studentId, academicYearId])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([academicYearId])
+  @@index([yearStatus])
+  @@map("student_year_records")
+}
+
+// =====================================================
+// GRADUATION MANAGEMENT
+// =====================================================
+
+model GraduateRecord {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  studentId         String    @unique
+  student           Student   @relation(fields: [studentId], references: [id])
+  
+  graduationYear    Int       // e.g., 2024, 2025
+  graduationDate    DateTime  @default(now())
+  
+  // Certificate details
+  certificateNumber String?   @unique
+  certificateIssued Boolean   @default(false)
+  certificateIssuedAt DateTime?
+  
+  // Final results
+  finalGPA          Float?
+  finalGradeLetter  String?
+  honors            String?   // "First Class", "Second Class", etc.
+  
+  // Program details
+  programName       String?   // e.g., "Cabin Crew Training"
+  specialization    String?
+  
+  // Employment tracking
+  employed          Boolean?
+  employerName      String?
+  employmentDate    DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([graduationYear])
+  @@index([certificateNumber])
+  @@map("graduate_records")
+}
+
+// =====================================================
+// STUDENT ARCHIVE
+// =====================================================
+
+model ArchivedStudent {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  // Original student data snapshot
+  originalStudentId String
+  studentIdNumber   String    // Original student ID
+  firstName         String
+  lastName          String
+  email             String?
+  phone             String?
+  dateOfBirth       DateTime?
+  gender            String?
+  
+  // Guardian info
+  guardianName      String?
+  guardianPhone     String?
+  guardianEmail     String?
+  
+  // Academic info
+  className         String?   // Name of class they were in
+  sessionId         String?   // Academic session
+  
+  // Archive details
+  archiveYear       Int       // Year of archiving
+  archiveReason     String    // graduated, terminated, transferred, completed
+  finalStatus       String    // Final status before archiving
+  
+  graduationYear    Int?
+  certificateNumber String?
+  
+  // Search metadata
+  searchName        String    // Full name for searching (lowercase)
+  
+  // Reference to original records
+  graduateRecordId  String?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([organizationId])
+  @@index([archiveYear])
+  @@index([finalStatus])
+  @@index([searchName])
+  @@index([studentIdNumber])
+  @@map("archived_students")
+}
+
+// =====================================================
+// ACTIVITY LOG
+// =====================================================
+
+model ActivityLogEntry {
+  id                String    @id @default(cuid())
+  organizationId    String
+  
+  // Action details
+  action            String    // student_created, attendance_marked, schedule_created, etc.
+  entityType        String    // student, teacher, class, schedule, attendance
+  entityId          String?   // ID of the affected entity
+  
+  description       String    @db.Text
+  
+  // Additional data
+  metadata          Json?     // Additional context
+  
+  // User who performed the action
+  userId            String?
+  userName          String?
+  userRole          String?
+  
+  // IP and device info
+  ipAddress         String?
+  userAgent         String?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([organizationId])
+  @@index([action])
+  @@index([entityType])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activity_log_entries")
+}
+
+// =====================================================
+// MONTHLY SCHEDULE MODEL
+// =====================================================
+
+model MonthlySchedule {
+  id              String    @id @default(cuid())
+  organizationId  String
+  
+  classId         String
+  class           EduClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  month           Int       // 1-12
+  year            Int       // e.g., 2025
+  
+  schoolName      String?   // Cached school name for exports
+  
+  entries         ScheduleEntry[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([classId, month, year])
+  @@index([organizationId])
+  @@index([classId])
+  @@map("monthly_schedules")
+}
+
+// =====================================================
+// SCHEDULE ENTRY MODEL
+// =====================================================
+
+model ScheduleEntry {
+  id              String    @id @default(cuid())
+  organizationId  String
+  
+  // Schedule reference
+  scheduleId      String
+  schedule        MonthlySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  
+  // Date and time
+  date            DateTime  // The specific date
+  dayOfWeek       Int       // 0-6 (Sunday-Saturday) for quick queries
+  startTime       String?   // HH:mm format
+  endTime         String?   // HH:mm format
+  
+  // Assignments
+  teacherId       String?
+  teacher         Teacher?  @relation(fields: [teacherId], references: [id])
+  
+  moduleId        String?
+  module          EduModule? @relation(fields: [moduleId], references: [id])
+  
+  classroomId     String?
+  classroom       Classroom? @relation(fields: [classroomId], references: [id])
+  
+  notes           String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([organizationId])
+  @@index([scheduleId])
+  @@index([date])
+  @@index([teacherId])
+  @@index([classroomId])
+  @@map("schedule_entries")
 }
