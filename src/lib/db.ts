@@ -1,6 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 
 // Type for global prisma instance
 type GlobalForPrisma = {
@@ -13,31 +11,12 @@ declare global {
 }
 
 /**
- * Creates a Prisma client configured for Turso/libSQL
+ * Creates a Prisma client
+ * For Vercel/Node.js: uses standard Prisma client
+ * Note: The DATABASE_URL should point to a libsql:// URL for Turso
  */
 function createPrismaClient(): PrismaClient {
-  const databaseUrl = process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
-
-  // During build time, return a basic PrismaClient without adapter
-  // The adapter requires database connection which isn't needed during build
-  if (!databaseUrl || process.env.VERCEL === "1" && !process.env.TURSO_AUTH_TOKEN) {
-    console.warn("Build mode or missing credentials: returning basic PrismaClient");
-    return new PrismaClient();
-  }
-
-  // Create libSQL client for Turso
-  const libsql = createClient({
-    url: databaseUrl,
-    authToken: authToken,
-  });
-
-  // Create Prisma adapter for libSQL - pass the client instance
-  const adapter = new PrismaLibSQL(libsql);
-
-  // Create Prisma client with the adapter
   return new PrismaClient({
-    adapter,
     log: process.env.NODE_ENV === "development" 
       ? ["query", "error", "warn"] 
       : ["error"],
