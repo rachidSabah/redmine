@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
