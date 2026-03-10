@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { createClient } from "@libsql/client";
 
 // Type for global prisma instance
 type GlobalForPrisma = {
@@ -26,14 +25,11 @@ function createPrismaClient(): PrismaClient {
   }
 
   try {
-    // Create libSQL client for Turso
-    const libsql = createClient({
+    // Create Prisma adapter for libSQL - pass config directly
+    const adapter = new PrismaLibSQL({
       url: databaseUrl,
       authToken: authToken,
     });
-
-    // Create Prisma adapter for libSQL - note the correct casing
-    const adapter = new PrismaLibSQL(libsql);
 
     // Create Prisma client with the adapter
     return new PrismaClient({
