@@ -16,7 +16,5 @@ name = "synchro"
 [env.preview]
 name = "synchro-preview"
 
-# Build configuration - DO NOT include wrangler deploy here
-[build]
-command = "bun run build && npx @cloudflare/next-on-pages"
-watch_dir = "src"
+# Note: Do NOT add [build] section here!
+# Cloudflare Pages uses the dashboard settings for build commands
