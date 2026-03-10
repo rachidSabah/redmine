@@ -25,22 +25,27 @@ function createPrismaClient(): PrismaClient {
     return new PrismaClient();
   }
 
-  // Create libSQL client for Turso
-  const libsql = createClient({
-    url: databaseUrl,
-    authToken: authToken,
-  });
+  try {
+    // Create libSQL client for Turso
+    const libsql = createClient({
+      url: databaseUrl,
+      authToken: authToken,
+    });
 
-  // Create Prisma adapter for libSQL
-  const adapter = new PrismaLibSQL(libsql);
+    // Create Prisma adapter for libSQL
+    const adapter = new PrismaLibSQL(libsql);
 
-  // Create Prisma client with the adapter
-  return new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" 
-      ? ["query", "error", "warn"] 
-      : ["error"],
-  });
+    // Create Prisma client with the adapter
+    return new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === "development" 
+        ? ["query", "error", "warn"] 
+        : ["error"],
+    });
+  } catch (error) {
+    console.warn("Failed to create Prisma adapter, using basic client:", error);
+    return new PrismaClient();
+  }
 }
 
 export const prisma = globalThis.prisma ?? createPrismaClient();
