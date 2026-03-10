@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: synchro
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: libsql://redmine-rachidelsabah.aws-eu-west-1.turso.io
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        fromService:
+          type: web
+          name: synchro
+          property: url
+    branch: main
+    repo: https://github.com/rachidSabah/redmine
