@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql"; // Corrected named import
+import { PrismaLibSql } from "@prisma/adapter-libsql"; // Correct: PrismaLibSql (lowercase 'sql')
 import { createClient } from "@libsql/client/web";     // Must use /web for Edge
 
 // Type for global prisma instance
@@ -33,7 +33,10 @@ function createPrismaClient(): PrismaClient {
   });
 
   // Create Prisma adapter for libSQL
-  const adapter = new PrismaLibSQL(libsql);
+  const adapter = new PrismaLibSql({
+    url: databaseUrl,
+    authToken: authToken,
+  });
 
   // Create Prisma client with the adapter
   return new PrismaClient({

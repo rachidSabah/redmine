@@ -17,10 +17,8 @@ const nextConfig: NextConfig = {
   // Trailing slashes for static hosting
   trailingSlash: true,
   
-  // Experimental features for edge runtime
-  experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "prisma", "@libsql/client"],
-  },
+  // External packages for Edge runtime (Next.js 15 syntax)
+  serverExternalPackages: ["@prisma/client", "prisma", "@libsql/client"],
   
   // Webpack configuration
   webpack: (config, { isServer }) => {
