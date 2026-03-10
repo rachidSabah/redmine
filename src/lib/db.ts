@@ -11,7 +11,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
+import PrismaLibSQL from "@prisma/adapter-libsql";  // FIXED: Use default import
 import { createClient } from "@libsql/client";
 
 // Type for global prisma instance
