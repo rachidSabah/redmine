@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql"; // Correct: PrismaLibSql (lowercase 'sql')
-import { createClient } from "@libsql/client/web";     // Must use /web for Edge
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
+import { createClient } from "@libsql/client";
 
 // Type for global prisma instance
 type GlobalForPrisma = {
@@ -13,16 +13,16 @@ declare global {
 }
 
 /**
- * Creates a Prisma client configured for the Edge runtime
+ * Creates a Prisma client configured for Turso/libSQL
  */
 function createPrismaClient(): PrismaClient {
   const databaseUrl = process.env.DATABASE_URL || process.env.TURSO_DATABASE_URL;
   const authToken = process.env.TURSO_AUTH_TOKEN;
 
-  // CRITICAL FIX: Do not throw an error during the Next.js build phase.
-  // We return a dummy client so Next.js can finish "Collecting page data".
-  if (!databaseUrl) {
-    console.warn("WARNING: DATABASE_URL is missing. Returning empty PrismaClient for build compatibility.");
+  // During build time, return a basic PrismaClient without adapter
+  // The adapter requires database connection which isn't needed during build
+  if (!databaseUrl || process.env.VERCEL === "1" && !process.env.TURSO_AUTH_TOKEN) {
+    console.warn("Build mode or missing credentials: returning basic PrismaClient");
     return new PrismaClient();
   }
 
@@ -32,11 +32,8 @@ function createPrismaClient(): PrismaClient {
     authToken: authToken,
   });
 
-  // Create Prisma adapter for libSQL
-  const adapter = new PrismaLibSql({
-    url: databaseUrl,
-    authToken: authToken,
-  });
+  // Create Prisma adapter for libSQL - pass the client instance
+  const adapter = new PrismaLibSQL(libsql);
 
   // Create Prisma client with the adapter
   return new PrismaClient({
