@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import * as bcrypt from "bcrypt";
