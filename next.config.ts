@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable static export for Cloudflare Pages Functions support
-  output: undefined,
-  
   // Disable image optimization (use Cloudflare Images instead)
   images: {
     unoptimized: true,
@@ -17,9 +14,11 @@ const nextConfig: NextConfig = {
   // Disable React strict mode for edge compatibility
   reactStrictMode: false,
   
-  // FIX: Add Turbopack config to silence Next.js 16 warning
+  // Trailing slashes for static hosting
+  trailingSlash: true,
+  
+  // Experimental features for edge runtime
   experimental: {
-    turbopack: {},
     serverComponentsExternalPackages: ["@prisma/client", "prisma", "@libsql/client"],
   },
   
