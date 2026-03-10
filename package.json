@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "prisma generate && next build",
+    "build": "next build --webpack",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push",
@@ -13,7 +13,9 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "bun prisma/seed.ts",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "pages:deploy": "npx wrangler pages deploy .vercel/output/static"
+    "pages:deploy": "npx wrangler pages deploy .vercel/output/static",
+    "cf:build": "prisma generate && next build --webpack",
+    "cf:preview": "wrangler pages dev .next"
   },
   "prisma": {
     "seed": "bun prisma/seed.ts"
