@@ -1,0 +1,10 @@
+version: 1
+name: synchro
+build:
+  type: buildpack
+  buildpacks:
+    - paketobuildpacks/nodejs
+run:
+  web: bun run start
+env:
+  NODE_ENV: production
