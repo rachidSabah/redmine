@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:seed": "bun prisma/seed.ts"
+    "db:seed": "bun prisma/seed.ts",
+    "pages:build": "next-on-pages"
   },
   "prisma": {
     "seed": "bun prisma/seed.ts"
@@ -89,6 +90,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@tailwindcss/postcss": "^4",
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^3.0.0",
