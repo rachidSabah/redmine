@@ -1,12 +1,10 @@
 // =====================================================
 // MULTI-TENANT SAAS PROJECT MANAGEMENT SYSTEM
 // Complete Database Schema for Jira + Redmine + Asana Alternative
-// Configured for Cloudflare Pages + Turso (libSQL)
 // =====================================================
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
